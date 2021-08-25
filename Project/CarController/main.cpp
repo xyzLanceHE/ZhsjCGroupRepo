@@ -1,7 +1,9 @@
-#include "TinyROS/TinyROS.h"
+#include <iostream>
 
 int main()
 {
-	TinyROS::Node::HelloWorld();
+
+	int hangOn;
+	std::cin >> hangOn;
 	return 0;
 }

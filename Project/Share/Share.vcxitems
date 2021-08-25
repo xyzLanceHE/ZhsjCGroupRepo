@@ -14,10 +14,17 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Exceptions.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Node.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\e_os2.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\opensslconf.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\opensslv.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\sha.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Exceptions.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Node.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROS.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROSPlatformDef.h" />
   </ItemGroup>
 </Project>
