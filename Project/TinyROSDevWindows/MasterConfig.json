@@ -1,0 +1,6 @@
+{
+  "MulticastIP" : "239.0.1.10",
+  "MulticastPort" : 6666,
+  "ListenIP": "192.168.1.101",
+  "ListenPort" : 6665
+}

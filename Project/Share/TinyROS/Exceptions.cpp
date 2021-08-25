@@ -22,8 +22,8 @@ namespace TinyROS
 		return this->whatMessage.c_str();
 	}
 
-	const char* NodeInitializeFailedException::what() noexcept
-	{
-		return this->whatMessage.c_str();
-	}
+	//const char* NodeInitializeFailedException::what() noexcept
+	//{
+	//	return this->whatMessage.c_str();
+	//}
 }

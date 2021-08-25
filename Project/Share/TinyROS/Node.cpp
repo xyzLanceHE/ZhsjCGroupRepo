@@ -37,7 +37,7 @@ namespace TinyROS
         }
     };
 
-    Node::NodeImplementData* Node::implData = new Node::NodeImplementData();
+    Node::NodeImplementData* const Node::implData = new Node::NodeImplementData();
    
     bool Node::IsInitialized = false;
 

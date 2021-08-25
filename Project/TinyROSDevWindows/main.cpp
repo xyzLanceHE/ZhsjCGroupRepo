@@ -6,14 +6,9 @@
 
 int main()
 {
-    TinyROS::Node::HelloWorld();
-    try {
-        TinyROS::Node::Init();
-    }
-    catch (TinyROS::NodeInitializeFailedException& e)
-    {
-        std::cout << e.what();
-    }
+    TinyROS::Master::LoadConfig("MasterConfig.json");
+    TinyROS::Master::Run();
+    TinyROS::Master::SaveConfig("MasterLastRun.json");
     return 0;
 }
 

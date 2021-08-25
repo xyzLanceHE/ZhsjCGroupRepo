@@ -14,17 +14,42 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_reader.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_value.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_writer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Exceptions.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Master.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Messages.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Node.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Publisher.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Subscriber.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\allocator.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\assertions.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\config.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\forwards.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\json.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\json_features.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\reader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\value.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\version.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\writer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\json_tool.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\e_os2.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\opensslconf.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\opensslv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\sha.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Exceptions.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Master.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Messages.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Node.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Publisher.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Subscriber.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROS.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROSPlatformDef.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)JsonCpp\json_valueiterator.inl" />
   </ItemGroup>
 </Project>

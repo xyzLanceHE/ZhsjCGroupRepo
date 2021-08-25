@@ -17,6 +17,6 @@ namespace TinyROS
 		static void LoadIPList();
 	private:
 		class NodeImplementData;
-		static NodeImplementData* implData;
+		static NodeImplementData* const implData;
 	};
 }
