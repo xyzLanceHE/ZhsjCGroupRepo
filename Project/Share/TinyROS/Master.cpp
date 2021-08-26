@@ -34,6 +34,8 @@
 #include <vector>
 #include <algorithm>
 #include <thread>
+#include <chrono>
+#include <csignal>
 #include "JsonCpp/include/json.h"
 
 namespace TinyROS
@@ -47,11 +49,14 @@ namespace TinyROS
 		int ListenPort;
 		int MulticastLocalBindPort;
 		bool IsConfigSet;
-		bool ExitFlag;
+		int ExitFlag;
 		bool IsRunning;
+		bool IsColsed;
+		bool KeyboardInterruptFlag;
 		SOCKET MulticastSocketFD;
 		SOCKET ListenSocketFD;
 		sockaddr_in MulticastAddr;
+		MasterBroadcastDatagram BroadcastMessage;
 	public:
 		MasterImplementData()
 		{
@@ -61,8 +66,12 @@ namespace TinyROS
 			this->ListenPort = 0;
 			this->MulticastLocalBindPort = 0;
 			this->IsConfigSet = false;
-			this->ExitFlag = false;
+			this->ExitFlag = 0b00;
 			this->IsRunning = false;
+			this->IsColsed = false;
+			this->KeyboardInterruptFlag = false;
+			this->BroadcastMessage.Signal = 0;
+			this->BroadcastMessage.ListenPort = 0;
 		}
 	};
 
@@ -70,6 +79,11 @@ namespace TinyROS
 
 	void Master::Run()
 	{
+		if (Master::implData->IsColsed)
+		{
+			throw MasterLaunchFailedException("Master已关闭");
+		}
+
 		if (!Master::implData->IsConfigSet)
 		{
 			throw MasterLaunchFailedException("尚未配置此Master的参数");
@@ -93,23 +107,51 @@ namespace TinyROS
 
 		Master::SetUpSocket();
 
+		Master::implData->BroadcastMessage.Signal = 1;
 		std::thread listenThread = std::thread(Master::ListenThread);
 		std::thread multicastThread = std::thread(Master::BroadcastThread);
 		listenThread.detach();
 		multicastThread.detach();
-		//std::cout << "run to the end\n";
+		
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(0.2s);
+		std::cout << "Master开始已运行\n";
+		Master::implData->IsRunning = true;
+	}
 
+	void Master::Spin()
+	{
+		Master::TakeOverCtrlC();
+		while (true)
+		{
+			if (Master::implData->KeyboardInterruptFlag)
+			{
+				break;
+			}
+		}
 	}
 
 	void Master::Exit()
 	{
-		if (!Master::implData->IsRunning)
+		if ((!Master::implData->IsRunning) || Master::implData->IsColsed)
 		{
+			std::cout << "Exit doing nothing\n";
 			return;
 		}
-		Master::implData->ExitFlag = true;
+		Master::implData->BroadcastMessage.Signal = 2;
+		Master::implData->ExitFlag = 0b11;
+		std::cout << "Exitting\n";
+		int leftPeriod = 10;
+		while (Master::implData->ExitFlag != 0 && leftPeriod != 0)
+		{
+			leftPeriod--;
+			using namespace std::chrono_literals;
+			std::this_thread::sleep_for(0.3s);
+		}
 		CloseSocket(Master::implData->ListenSocketFD);
 		CloseSocket(Master::implData->MulticastSocketFD);
+		std::cout << "resources closed, process exited\n";
+		Master::implData->IsColsed = true;
 	}
 
 	void Master::LoadConfig(const char* configPath)
@@ -230,13 +272,13 @@ namespace TinyROS
 		else
 		{
 			int err = ErrorCode;
-			std::cout << err << std::endl;
 			CloseSocket(tempSocketFD);
 			switch (err)
 			{
 			case RECEIVE_TIMEOUT:
 				return false;
 			default:
+				std::cout << err << std::endl;
 				return true;
 			}
 		}
@@ -268,6 +310,7 @@ namespace TinyROS
 			// TODO : 如果是端口被占用，自动尝试别的端口
 			throw MasterLaunchFailedException("未能绑定收听套接字");
 		}
+		Master::implData->BroadcastMessage.ListenPort = Master::implData->ListenPort;
 
 
 		// 绑定广播发送套接字的本地端口
@@ -295,25 +338,66 @@ namespace TinyROS
 
 	void Master::BroadcastThread()
 	{
+		std::cout << "广播线程已启动\n";
+		int exitBroadcastCount = 3;
 		while (true)
 		{
-			if (Master::implData->ExitFlag)
+			if (Master::implData->ExitFlag & 0b01)
 			{
-				break;
+				exitBroadcastCount--;
+				if (exitBroadcastCount == 0)
+				{
+					Master::implData->ExitFlag &= 0b10;
+					break;
+				}
+			}
+			
+			int sentLen = sendto(Master::implData->MulticastSocketFD,
+				reinterpret_cast<char*>(&Master::implData->BroadcastMessage),
+				sizeof(MasterBroadcastDatagram), 0,
+				reinterpret_cast<sockaddr*>(&Master::implData->MulticastAddr), sizeof(sockaddr_in));
+			if (sentLen == -1)
+			{
+				std::cout << "广播时出现问题:" << ErrorCode << std::endl;
 			}
 
+			using namespace std::chrono_literals;
+			std::this_thread::sleep_for(0.8s);
 		}
 	}
 
 	void Master::ListenThread()
 	{
+		std::cout << "收听线程已启动\n";
 		while (true)
 		{
-			if (Master::implData->ExitFlag)
+			if (Master::implData->ExitFlag & 0b10)
 			{
+				Master::implData->ExitFlag &= 0b01;
 				break;
 			}
+			
+		}
+	}
 
+	void Master::TakeOverCtrlC()
+	{
+		Master::implData->KeyboardInterruptFlag = false;
+		signal(SIGINT, Master::CtrlCHandler);
+	}
+
+	void Master::CtrlCHandler(int signal)
+	{
+		std::cout << "You've pressed ctrl + C...\n";
+		if (!Master::implData->IsColsed)
+		{
+			Master::Exit();
+			Master::implData->KeyboardInterruptFlag = true;
+		}
+		else
+		{
+			Master::implData->KeyboardInterruptFlag = true;
+			exit(0);
 		}
 	}
 }

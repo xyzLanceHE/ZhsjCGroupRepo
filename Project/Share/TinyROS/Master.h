@@ -7,6 +7,7 @@ namespace TinyROS
 	{
 	public:
 		static void Run();
+		static void Spin();
 		static void Exit();
 		static void LoadConfig(const char* configPath);
 		static void SaveConfig(const char* configPath);
@@ -15,6 +16,8 @@ namespace TinyROS
 		static void SetUpSocket();
 		static void BroadcastThread();
 		static void ListenThread();
+		static void TakeOverCtrlC();
+		static void CtrlCHandler(int signal);
 	private:
 		class MasterImplementData;
 		static MasterImplementData* const implData;

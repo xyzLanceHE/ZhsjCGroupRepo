@@ -1,4 +1,5 @@
 #include "Node.h"
+#include "Messages.h"
 #include "Exceptions.h"
 #include <cstdio>
 #include <string>
@@ -20,6 +21,7 @@
 #elif __TINYROS_ON_WINDOWS_PRIDEF__
 	#include <WinSock2.h>
 	#include <Iphlpapi.h>
+    #include <WS2tcpip.h>
 	#pragma comment(lib, "WS2_32.lib")
 	#pragma comment(lib, "Iphlpapi.lib")
 #endif
@@ -31,7 +33,11 @@ namespace TinyROS
     public:
         std::vector<std::string> IpStrList;
         SOCKET MasterReceiverSocketFD;
+        SOCKET MasterTalkerSocketFD;
         std::string Name;
+        SHA256Value Hash;
+        int MasterPort;
+        in_addr MasterIP;
     public:
         NodeImplementData()
         {
@@ -43,11 +49,6 @@ namespace TinyROS
    
     bool Node::IsInitialized = false;
 
-	void Node::HelloWorld()
-	{
-		printf("Hello world, TinyROS!\n");
-	}
-
 	void Node::Init(const char* name)
 	{
         Node::implData->Name = name;
@@ -56,6 +57,7 @@ namespace TinyROS
         {
             throw NodeInitializeFailedException("未能获取本机ip");
         }
+        std::cout << "尝试以下ip:\n";
         for (auto s : Node::implData->IpStrList)
         {
             std::cout << s << std::endl;
@@ -63,9 +65,20 @@ namespace TinyROS
         Node::ScanForMaster();
 	}
 
+    void Node::HashTest()
+    {
+        std::string msg("this is a node");
+        SHA256Value hashVal;
+        SHA256((unsigned char*)msg.c_str(), msg.size(), hashVal.value);
+        std::cout << "sha256 of the message:" << hashVal.ToHexString().c_str() << std::endl;
+    }
+
     void Node::ScanForMaster()
     {
-        throw NodeInitializeFailedException("没写完");
+        for (auto ipStr : Node::implData->IpStrList)
+        {
+            
+        }
     }
 
     void Node::LoadIPList()

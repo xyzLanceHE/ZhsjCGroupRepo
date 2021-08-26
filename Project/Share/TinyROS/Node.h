@@ -8,8 +8,8 @@ namespace TinyROS
 	class Node
 	{
 	public:
-		static void HelloWorld();
 		static void Init(const char* name);
+		static void HashTest();
 	public:
 		static bool IsInitialized;
 	private:

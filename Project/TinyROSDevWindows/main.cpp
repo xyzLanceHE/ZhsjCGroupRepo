@@ -15,7 +15,7 @@ int main()
     {
         std::cout << e.what() << std::endl;
     }
-
+    TinyROS::Master::Spin();
     TinyROS::Master::SaveConfig("MasterLastRun.json");
     return 0;
 }
