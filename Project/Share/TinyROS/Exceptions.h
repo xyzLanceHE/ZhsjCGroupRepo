@@ -36,7 +36,7 @@ namespace TinyROS
 	class MasterAlreadyExistExcepiton : public TinyROSException
 	{
 	public:
-		using TinyROSException::TinyROSException;
+		MasterAlreadyExistExcepiton();
 		//virtual const char* what() noexcept;
 		virtual ~MasterAlreadyExistExcepiton() {}
 	};

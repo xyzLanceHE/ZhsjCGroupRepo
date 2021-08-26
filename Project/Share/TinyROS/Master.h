@@ -12,7 +12,9 @@ namespace TinyROS
 		static void SaveConfig(const char* configPath);
 	private:
 		static bool ExistOtherMaster();
+		static void SetUpSocket();
 		static void BroadcastThread();
+		static void ListenThread();
 	private:
 		class MasterImplementData;
 		static MasterImplementData* const implData;

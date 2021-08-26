@@ -11,7 +11,8 @@
 #endif
 
 #if __TINYROS_ON_LINUX_PRIDEF__
-	#include <sys/socket.h>
+    #include <unistd.h>	
+    #include <sys/socket.h>
 	#include <arpa/inet.h>
     #include <netinet/in.h>
     #include <ifaddrs.h>
@@ -28,8 +29,9 @@ namespace TinyROS
     class Node::NodeImplementData
     {
     public:
-        std::vector<std::string> ipStrList;
-        SOCKET masterReceiverSocketFD;
+        std::vector<std::string> IpStrList;
+        SOCKET MasterReceiverSocketFD;
+        std::string Name;
     public:
         NodeImplementData()
         {
@@ -46,14 +48,15 @@ namespace TinyROS
 		printf("Hello world, TinyROS!\n");
 	}
 
-	void Node::Init()
+	void Node::Init(const char* name)
 	{
+        Node::implData->Name = name;
         Node::LoadIPList();
-        if (Node::implData->ipStrList.size() == 0)
+        if (Node::implData->IpStrList.size() == 0)
         {
             throw NodeInitializeFailedException("未能获取本机ip");
         }
-        for (auto s : Node::implData->ipStrList)
+        for (auto s : Node::implData->IpStrList)
         {
             std::cout << s << std::endl;
         }
@@ -95,7 +98,7 @@ namespace TinyROS
                 // std::cout << "IP:" << ipString << std::endl;
                 if (ipString != "0.0.0.0")
                 {
-                    Node::implData->ipStrList.push_back(ipString);
+                    Node::implData->IpStrList.push_back(ipString);
                 }
                 pIpAddrString = pIpAddrString->Next;
             }
@@ -133,7 +136,7 @@ namespace TinyROS
             // std::cout << "IP:" << ipString << std::endl;
             if (ipString != "0.0.0.0")
             {
-                Node::implData->ipStrList.push_back(ipString);
+                Node::implData->IpStrList.push_back(ipString);
             }
             pIfAddrInfo = pIfAddrInfo->ifa_next;
         }

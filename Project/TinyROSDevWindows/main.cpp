@@ -7,7 +7,15 @@
 int main()
 {
     TinyROS::Master::LoadConfig("MasterConfig.json");
-    TinyROS::Master::Run();
+    try
+    {
+        TinyROS::Master::Run();
+    }
+    catch (TinyROS::TinyROSException& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
+
     TinyROS::Master::SaveConfig("MasterLastRun.json");
     return 0;
 }

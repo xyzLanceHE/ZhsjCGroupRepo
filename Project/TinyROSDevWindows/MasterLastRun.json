@@ -1,6 +1,7 @@
 {
-	"ListenIP" : "192.168.1.101",
-	"ListenPort" : 6665,
+	"ListenIP" : "192.168.43.139",
+	"ListenPort" : 6661,
 	"MulticastIP" : "239.0.1.10",
+	"MulticastLocalBindPort" : 6660,
 	"MulticastPort" : 6666
 }

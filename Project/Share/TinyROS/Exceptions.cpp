@@ -22,6 +22,11 @@ namespace TinyROS
 		return this->whatMessage.c_str();
 	}
 
+	MasterAlreadyExistExcepiton::MasterAlreadyExistExcepiton()
+	{
+		this->whatMessage = "局域网中已经存在一个Master";
+	}
+
 	//const char* NodeInitializeFailedException::what() noexcept
 	//{
 	//	return this->whatMessage.c_str();

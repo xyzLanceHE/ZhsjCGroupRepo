@@ -9,7 +9,7 @@ namespace TinyROS
 	{
 	public:
 		static void HelloWorld();
-		static void Init();
+		static void Init(const char* name);
 	public:
 		static bool IsInitialized;
 	private:
