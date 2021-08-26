@@ -3,6 +3,14 @@
 
 namespace TinyROS
 {
+	template<typename TMessage>
+	class Subscriber
+	{
+	public:
 
+	};
+
+
+	
 
 }

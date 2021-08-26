@@ -3,6 +3,11 @@
 
 namespace TinyROS
 {
+	template<typename TMessage>
+	class Publisher
+	{
+	public:
 
+	};
 
 }

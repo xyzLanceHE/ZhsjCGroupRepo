@@ -104,7 +104,7 @@
     <Library Update="E:\OneDrive\综合设计与实践C\ZhsjCGroupRepo\Project\Share\OpenSSL\lib\Linux_x64\libcrypto_x64.a">
       <FileType>Document</FileType>
     </Library>
-    <Library Include="..\Share\OpenSSL\lib\Linux_ARM\libcrypto_arm.a" />
+    <Library Include="..\Share\OpenSSL\lib\Linux_x64\libcrypto_x64.a" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

@@ -1,4 +1,5 @@
 #include "Master.h"
+#include "Node.h"
 #include "Messages.h"
 #include "Exceptions.h"
 
@@ -6,28 +7,7 @@
 	#error 无效的平台信息
 #endif
 
-#if __TINYROS_ON_LINUX_PRIDEF__
-	#include <unistd.h>	
-	#include <sys/socket.h>
-	#include <arpa/inet.h>
-	#include <netinet/in.h>
-	#include <ifaddrs.h>
-	#include <errno.h>
-	using SOCKET = int;
-	#define INVALID_SOCKET -1
-	#define CloseSocket close
-	#define ErrorCode errno
-	#define RECEIVE_TIMEOUT EAGAIN
-#elif __TINYROS_ON_WINDOWS_PRIDEF__
-	#include <WinSock2.h>
-	#include <Iphlpapi.h>
-	#include <WS2tcpip.h>
-	#pragma comment(lib, "WS2_32.lib")
-	#pragma comment(lib, "Iphlpapi.lib")
-	#define CloseSocket closesocket
-	#define ErrorCode WSAGetLastError()
-	#define RECEIVE_TIMEOUT WSAETIMEDOUT
-#endif
+#include "TinyROSNetPrefix.h"
 
 #include <iostream>
 #include <fstream>
@@ -36,27 +16,53 @@
 #include <thread>
 #include <chrono>
 #include <csignal>
+#include <map>
 #include "JsonCpp/include/json.h"
 
 namespace TinyROS
 {
+	using TopicList = std::vector<TopicID>;
+
+
+	struct NodeInformation
+	{
+		std::string Name;
+		TopicList Subscribed;
+		TopicList Published;
+	};
+
+	struct TopicInformation
+	{
+		std::string Name;
+		TypeIDHash Type;
+	};
+
+	using NodeDictionary = std::map<SHA256Value, NodeInformation>;
+	using TopicDictionary = std::map<TopicID, std::string>;
+
 	class Master::MasterImplementData
 	{
 	public:
+
 		std::string MulticastIP;
 		std::string ListenIP;
 		int MulticastPort;
 		int ListenPort;
 		int MulticastLocalBindPort;
 		bool IsConfigSet;
+
 		int ExitFlag;
 		bool IsRunning;
 		bool IsColsed;
 		bool KeyboardInterruptFlag;
+
 		SOCKET MulticastSocketFD;
 		SOCKET ListenSocketFD;
 		sockaddr_in MulticastAddr;
 		MasterBroadcastDatagram BroadcastMessage;
+
+		NodeDictionary Nodes;
+		TopicDictionary Topics;
 	public:
 		MasterImplementData()
 		{
@@ -243,7 +249,7 @@ namespace TinyROS
 		timeval timeout = { 5, 0 }; //5s
 #else
 #endif
-		setsockopt(tempSocketFD, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout), sizeof(timeout));
+		ret = setsockopt(tempSocketFD, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout), sizeof(timeout));
 		if (ret != 0)
 		{
 			CloseSocket(tempSocketFD);
@@ -342,7 +348,8 @@ namespace TinyROS
 		int exitBroadcastCount = 3;
 		while (true)
 		{
-			if (Master::implData->ExitFlag & 0b01)
+			int resetThis = Master::implData->ExitFlag & 0b01;
+			if (resetThis)
 			{
 				exitBroadcastCount--;
 				if (exitBroadcastCount == 0)
@@ -371,7 +378,8 @@ namespace TinyROS
 		std::cout << "收听线程已启动\n";
 		while (true)
 		{
-			if (Master::implData->ExitFlag & 0b10)
+			int resetThis = Master::implData->ExitFlag & 0b10;
+			if (resetThis)
 			{
 				Master::implData->ExitFlag &= 0b01;
 				break;

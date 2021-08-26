@@ -3,7 +3,7 @@
 
 int main()
 {
-    TinyROS::Node::HashTest();
+    TinyROS::Node::Init("hello");
     int hang;
     std::cin >> hang;
     return 0;

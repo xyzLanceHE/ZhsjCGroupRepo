@@ -15,6 +15,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RoutePlanning", "RoutePlann
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Share\Share.vcxitems*{35464a64-6bf2-4cec-85ec-d5bfbce5d9bd}*SharedItemsImports = 4
 		Share\Share.vcxitems*{3ac4e857-b455-4e34-84b9-3833909f9bb9}*SharedItemsImports = 9
 		Share\Share.vcxitems*{4b73bf87-20ca-44cd-815f-c560e55af53e}*SharedItemsImports = 4
 	EndGlobalSection

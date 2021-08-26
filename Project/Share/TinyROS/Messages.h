@@ -1,6 +1,8 @@
 #pragma once
 #include "TinyROSPlatformDef.h"
 #include <string>
+#include <typeinfo>
+#include <typeindex>
 
 namespace TinyROS
 {
@@ -17,4 +19,15 @@ namespace TinyROS
 		int ListenPort;
 		int Signal;	
 	};
+
+	using TypeID = std::type_index;
+	using TypeIDHash = size_t;
+
+	class Message
+	{
+	public:
+		virtual TypeID GetTypeID();
+		virtual ~Message() {}
+	};
+
 }

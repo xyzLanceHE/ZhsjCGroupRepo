@@ -90,6 +90,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Publisher.h">
       <Filter>TinyROS</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROSNetPrefix.h">
+      <Filter>TinyROS</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Node.cpp">

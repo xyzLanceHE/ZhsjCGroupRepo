@@ -33,7 +33,7 @@ namespace TinyROS
 		virtual ~MasterLaunchFailedException() {}
 	};
 
-	class MasterAlreadyExistExcepiton : public TinyROSException
+	class MasterAlreadyExistExcepiton : public MasterLaunchFailedException
 	{
 	public:
 		MasterAlreadyExistExcepiton();

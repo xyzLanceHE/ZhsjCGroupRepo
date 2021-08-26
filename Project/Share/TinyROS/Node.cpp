@@ -5,26 +5,15 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <thread>
+#include <chrono>
 #include "OpenSSL/include/sha.h"
 
 #ifndef __TINYROS_PLATFORM__
 	#error 无效的平台信息
 #endif
 
-#if __TINYROS_ON_LINUX_PRIDEF__
-    #include <unistd.h>	
-    #include <sys/socket.h>
-	#include <arpa/inet.h>
-    #include <netinet/in.h>
-    #include <ifaddrs.h>
-    using SOCKET = int;
-#elif __TINYROS_ON_WINDOWS_PRIDEF__
-	#include <WinSock2.h>
-	#include <Iphlpapi.h>
-    #include <WS2tcpip.h>
-	#pragma comment(lib, "WS2_32.lib")
-	#pragma comment(lib, "Iphlpapi.lib")
-#endif
+#include "TinyROSNetPrefix.h"
 
 namespace TinyROS
 {
@@ -32,12 +21,18 @@ namespace TinyROS
     {
     public:
         std::vector<std::string> IpStrList;
+        std::string LocalIP;
         SOCKET MasterReceiverSocketFD;
         SOCKET MasterTalkerSocketFD;
         std::string Name;
-        SHA256Value Hash;
-        int MasterPort;
-        in_addr MasterIP;
+        SHA256Value NameHash;
+        in_addr MasterListenAddr;
+        int MasterListenPort;
+        int BoradcastPort;
+        int ResetFlag;
+    public:
+        static constexpr const char* DefaultBroadcastIP = "239.0.1.10";
+        static constexpr int DefaultBroadcastPort = 6666;
     public:
         NodeImplementData()
         {
@@ -51,19 +46,44 @@ namespace TinyROS
 
 	void Node::Init(const char* name)
 	{
+        if (Node::IsInitialized)
+        {
+            throw NodeInitializeFailedException("Node已经初始化过");
+        }
+
         Node::implData->Name = name;
+        Node::SetUpNameHash();
+
         Node::LoadIPList();
         if (Node::implData->IpStrList.size() == 0)
         {
             throw NodeInitializeFailedException("未能获取本机ip");
         }
-        std::cout << "尝试以下ip:\n";
-        for (auto s : Node::implData->IpStrList)
+
+#if __TINYROS_ON_WINDOWS_PRIDEF__
+        WSADATA lpWsaData;
+        int wsaStartRet = WSAStartup(MAKEWORD(2, 2), &lpWsaData);
+        if (wsaStartRet != 0)
         {
-            std::cout << s << std::endl;
+            throw NodeInitializeFailedException("加载Windows Socket API失败");
         }
+#endif
+
         Node::ScanForMaster();
+
+        Node::implData->BoradcastPort = Node::NodeImplementData::DefaultBroadcastPort;
+        Node::SetUpSocket();
+
+        Node::IsInitialized = true;
+
+        std::thread broadcastReceive(&Node::MasterReceiveThread);
+        broadcastReceive.detach();
 	}
+
+    void Node::Init(const char* name, const char* configPath)
+    {
+        throw NodeInitializeFailedException("此方法尚未实现\n");
+    }
 
     void Node::HashTest()
     {
@@ -73,11 +93,177 @@ namespace TinyROS
         std::cout << "sha256 of the message:" << hashVal.ToHexString().c_str() << std::endl;
     }
 
+    void Node::SetUpSocket()
+    {
+        Node::implData->MasterTalkerSocketFD = socket(AF_INET, SOCK_DGRAM, 0);
+        Node::implData->MasterReceiverSocketFD = socket(AF_INET, SOCK_DGRAM, 0);
+        if (Node::implData->MasterTalkerSocketFD == INVALID_SOCKET ||
+            Node::implData->MasterReceiverSocketFD == INVALID_SOCKET)
+        {
+            throw NodeInitializeFailedException("创建套接字失败");
+        }
+
+        int ret;
+
+        // MasterTalkerSocketFD用于主动向Master通信
+        // 不需要绑定
+#if __TINYROS_ON_WINDOWS_PRIDEF__
+        int timeout = 3000; //3s
+#elif __TINYROS_ON_LINUX_PRIDEF__
+        timeval timeout = { 3, 0 }; //3s
+#else
+#endif
+        ret = setsockopt(implData->MasterTalkerSocketFD, SOL_SOCKET, SO_RCVTIMEO,
+            reinterpret_cast<char*>(&timeout), sizeof(timeout));
+        if (ret != 0)
+        {
+            throw NodeInitializeFailedException("超时设置失败");
+        }
+
+        // MasterReceiverSocketFD用于接收广播
+        // 需要绑定到特定端口
+        int reuseAddr = 1;
+        ret = setsockopt(Node::implData->MasterReceiverSocketFD, SOL_SOCKET, SO_REUSEADDR,
+            reinterpret_cast<char*>(&reuseAddr), sizeof(reuseAddr));
+        if (ret != 0)
+        {
+            throw NodeInitializeFailedException("设置端口复用失败");
+        }
+
+        sockaddr_in multicastAddr;
+        multicastAddr.sin_family = AF_INET;
+        multicastAddr.sin_port = htons(Node::implData->BoradcastPort);
+        multicastAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+        ret = bind(Node::implData->MasterReceiverSocketFD, reinterpret_cast<sockaddr*>(&multicastAddr), sizeof(multicastAddr));
+        if (ret != 0)
+        {
+            throw NodeInitializeFailedException("广播收听套接字绑定失败");
+        }
+
+        ip_mreq multicastOption;
+        inet_pton(AF_INET, Node::NodeImplementData::DefaultBroadcastIP, &multicastOption.imr_multiaddr);
+        inet_pton(AF_INET, Node::implData->LocalIP.c_str(), &multicastOption.imr_interface);
+        ret = setsockopt(Node::implData->MasterReceiverSocketFD, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+            reinterpret_cast<char*>(&multicastOption), sizeof(multicastOption));
+        if (ret != 0)
+        {
+            std::cout << "multicast join error:" << ErrorCode;
+            throw NodeInitializeFailedException("加入广播组失败");
+        }
+    }
+
+    void Node::SetUpNameHash()
+    {
+        SHA256(
+            reinterpret_cast<const unsigned char*>(Node::implData->Name.c_str()),
+            Node::implData->Name.size(),
+            Node::implData->NameHash.value);
+    }
+
     void Node::ScanForMaster()
     {
+        bool foundInvalidMaster = false;
+        std::cout << "开始尝试以下ip:\n";
         for (auto ipStr : Node::implData->IpStrList)
         {
-            
+            std::cout << ipStr << std::endl;
+        }
+        for (auto ipStr : Node::implData->IpStrList)
+        {
+            SOCKET tempSocket = socket(AF_INET, SOCK_DGRAM, 0);
+            if (tempSocket == INVALID_SOCKET)
+            {
+                continue;
+            }
+
+            int ret;
+
+            int reuseAddr = 1;
+            ret = setsockopt(tempSocket, SOL_SOCKET, SO_REUSEADDR, 
+                reinterpret_cast<char*>(&reuseAddr), sizeof(reuseAddr));
+            if (ret != 0)
+            {
+                CloseSocket(tempSocket);
+                continue;
+            }
+
+            sockaddr_in multicastAddr;
+            multicastAddr.sin_family = AF_INET;
+            multicastAddr.sin_port = htons(Node::NodeImplementData::DefaultBroadcastPort);
+            //inet_pton(AF_INET, ipStr.c_str(), &multicastAddr.sin_addr.s_addr);
+            multicastAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+            ret = bind(tempSocket, reinterpret_cast<sockaddr*>(&multicastAddr), sizeof(multicastAddr));
+            if (ret != 0)
+            {
+                CloseSocket(tempSocket);
+                continue;
+            }
+
+            ip_mreq multicastOption;
+            inet_pton(AF_INET, Node::NodeImplementData::DefaultBroadcastIP, &multicastOption.imr_multiaddr);
+            inet_pton(AF_INET, ipStr.c_str(), &multicastOption.imr_interface);
+            ret = setsockopt(tempSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                reinterpret_cast<char*>(&multicastOption), sizeof(multicastOption));
+            if (ret != 0)
+            {
+                CloseSocket(tempSocket);
+                continue;
+            }
+
+#if __TINYROS_ON_WINDOWS_PRIDEF__
+            int timeout = 3000; //3s
+#elif __TINYROS_ON_LINUX_PRIDEF__
+            timeval timeout = { 3, 0 }; //3s
+#else
+#endif
+            ret = setsockopt(tempSocket, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout), sizeof(timeout));
+            if (ret != 0)
+            {
+                CloseSocket(tempSocket);
+                continue;
+            }
+
+            char buf[sizeof(MasterBroadcastDatagram)];
+            sockaddr_in masterAddr;
+            masterAddr.sin_addr.s_addr = INADDR_ANY;
+            masterAddr.sin_port = 0;
+            masterAddr.sin_family = AF_INET;
+            socklen_t addrLen = sizeof(sockaddr_in);
+            int rcvdLen = recvfrom(tempSocket, buf, sizeof(MasterBroadcastDatagram), 0, 
+                reinterpret_cast<sockaddr*>(&masterAddr), &addrLen);
+            if (rcvdLen != sizeof(MasterBroadcastDatagram))
+            {
+                CloseSocket(tempSocket);
+                continue;
+            }
+            else
+            {
+                MasterBroadcastDatagram* masterData = reinterpret_cast<MasterBroadcastDatagram*>(&buf);
+                if (masterData->Signal == 1)
+                {
+                    Node::implData->MasterListenPort = masterData->ListenPort;
+                    char masterIpBuf[40] = { 0 };
+                    inet_ntop(AF_INET, &masterAddr.sin_addr.s_addr, 
+                        masterIpBuf, sizeof(masterIpBuf));
+                    std::string masterIpStr(masterIpBuf);
+                    Node::implData->MasterListenAddr = masterAddr.sin_addr;
+                    Node::implData->LocalIP = ipStr;
+                    std::cout << "扫描到位于" << masterIpStr << ":" << Node::implData->MasterListenPort << "的Master\n";
+                    std::cout << "使用本地的" << ipStr << "收听\n";
+                    CloseSocket(tempSocket);
+                    foundInvalidMaster = true;
+                    break;
+                }
+                else
+                {
+                    CloseSocket(tempSocket);
+                    continue;
+                }
+            }
+        }
+        if (!foundInvalidMaster)
+        {
+            throw NodeInitializeFailedException("Master not found");
         }
     }
 
@@ -160,6 +346,60 @@ namespace TinyROS
 #else
         throw NodeInitializeFailedException();
 #endif
+    }
+
+    void Node::MasterReceiveThread()
+    {
+        int recvTimeoutCount = 0;
+        while (true)
+        {
+            if (Node::implData->ResetFlag)
+            {
+                break;
+            }
+
+            char buf[sizeof(MasterBroadcastDatagram)];
+            int rcvdLen = recvfrom(Node::implData->MasterReceiverSocketFD, buf, 
+                sizeof(buf), 0, nullptr, nullptr);
+            if (rcvdLen == -1)
+            {
+                int errCode = ErrorCode;
+                std::cout << "broadcast recv error:" << errCode << std::endl;
+                if (errCode == RECEIVE_TIMEOUT)
+                {
+                    recvTimeoutCount++;
+                    if (recvTimeoutCount > 5)
+                    {
+                        std::cout << "No hearing from Master for a long time\n";
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                MasterBroadcastDatagram* data = reinterpret_cast<MasterBroadcastDatagram*>(buf);
+                int signal = data->Signal;
+                if (signal == 2)
+                {
+                    std::cout << "Master signal shutdown\n";
+                }
+                else if (signal == 1)
+                {
+                    std::cout << "Master signal running\n";
+                }
+            }
+        }
+    }
+
+    TopicID NodeInnerMethods::RequestTopic(const char* topicName)
+    {
+        return -1; 
+        sendto(Node::implData->MasterTalkerSocketFD, nullptr, 0, 0, nullptr, 0);
+    }
+
+    TopicID NodeInnerMethods::GetTopic(const char* topicName)
+    {
+        return -1;
     }
 
 }

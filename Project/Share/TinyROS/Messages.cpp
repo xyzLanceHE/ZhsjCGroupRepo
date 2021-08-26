@@ -31,9 +31,19 @@ namespace TinyROS
 		}
 		for (int i = 0; i < 32; i++)
 		{
+#if __TINYROS_ON_WINDOWS_PRIDEF__
+			sprintf_s(buf + i * 2, strlen(format), format, *p);
+#else
 			sprintf(buf + i * 2, format, *p);
+#endif
 			p++;
 		}
 		return std::string(buf, 64);
+	}
+
+	TypeID Message::GetTypeID()
+	{
+		TypeID id(typeid(Message));
+		return id;
 	}
 }
