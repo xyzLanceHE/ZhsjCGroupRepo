@@ -4,6 +4,21 @@
     <Filter Include="TinyROS">
       <UniqueIdentifier>{2d23ca37-6e1f-4ab0-85a9-fd32ecd90616}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OpenSSL">
+      <UniqueIdentifier>{028483fb-f959-469d-8e49-ec73795cab2c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenSSL\include">
+      <UniqueIdentifier>{f0910fd0-0b1b-4c1e-ad82-f65787434165}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="JsonCpp">
+      <UniqueIdentifier>{2bec8f2a-2500-48bc-8bc2-b28ec1ee15f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="JsonCpp\include">
+      <UniqueIdentifier>{75899904-723a-4a4e-8ca1-a28ae73e6d9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="JsonCpp\src">
+      <UniqueIdentifier>{bf6090a2-a2e1-4ce5-898a-0f372aa76764}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Node.h">
@@ -12,10 +27,105 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROS.h">
       <Filter>TinyROS</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Exceptions.h">
+      <Filter>TinyROS</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROSPlatformDef.h">
+      <Filter>TinyROS</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\e_os2.h">
+      <Filter>OpenSSL\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\opensslconf.h">
+      <Filter>OpenSSL\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\opensslv.h">
+      <Filter>OpenSSL\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\sha.h">
+      <Filter>OpenSSL\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\allocator.h">
+      <Filter>JsonCpp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\assertions.h">
+      <Filter>JsonCpp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\config.h">
+      <Filter>JsonCpp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\forwards.h">
+      <Filter>JsonCpp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\json.h">
+      <Filter>JsonCpp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\json_features.h">
+      <Filter>JsonCpp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\reader.h">
+      <Filter>JsonCpp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\value.h">
+      <Filter>JsonCpp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\version.h">
+      <Filter>JsonCpp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\writer.h">
+      <Filter>JsonCpp\include</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\json_tool.h">
+      <Filter>JsonCpp\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Master.h">
+      <Filter>TinyROS</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Messages.h">
+      <Filter>TinyROS</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Subscriber.h">
+      <Filter>TinyROS</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Publisher.h">
+      <Filter>TinyROS</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROSNetPrefix.h">
+      <Filter>TinyROS</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Node.cpp">
       <Filter>TinyROS</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Exceptions.cpp">
+      <Filter>TinyROS</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_reader.cpp">
+      <Filter>JsonCpp\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_value.cpp">
+      <Filter>JsonCpp\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_writer.cpp">
+      <Filter>JsonCpp\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Master.cpp">
+      <Filter>TinyROS</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Messages.cpp">
+      <Filter>TinyROS</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Publisher.cpp">
+      <Filter>TinyROS</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Subscriber.cpp">
+      <Filter>TinyROS</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)JsonCpp\json_valueiterator.inl">
+      <Filter>JsonCpp\src</Filter>
+    </None>
   </ItemGroup>
 </Project>

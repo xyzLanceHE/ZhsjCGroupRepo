@@ -1,0 +1,23 @@
+#ifndef TINYROS_PALTFORMDEF_H
+#define TINYROS_PALTFORMDEF_H
+
+#ifdef TINYROS_ON_WINDOWS
+	#define __TINYROS_ON_WINDOWS_PRIDEF__	1
+#else
+	#define __TINYROS_ON_WINDOWS_PRIDEF__	0
+#endif
+
+#ifdef TINYROS_ON_LINUX
+	#define __TINYROS_ON_LINUX_PRIDEF__		1
+#else
+	#define __TINYROS_ON_LINUX_PRIDEF__		0
+#endif
+
+#if !(__TINYROS_ON_WINDOWS_PRIDEF__ ^ __TINYROS_ON_LINUX_PRIDEF__)
+	#error 必须有且仅有 TINYROS_ON_WINDOWS 或 TINYROS_ON_LINUX 之一
+#else
+	#define __TINYROS_PLATFORM__
+#endif
+
+#endif
+
