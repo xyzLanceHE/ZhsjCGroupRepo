@@ -7,6 +7,20 @@ namespace TinyROS
 {
 	using TopicID = int;
 
+	constexpr int RequestRegister = 11000 + 0b000;
+	constexpr int RequestPublish = 11000 + 0b011;
+	constexpr int RequestSubscribe = 11000 + 0b110;
+	constexpr int RequestUnregister = 11000 + 0b101;
+
+	constexpr int RequestSuccess = 0;
+	constexpr int RequestFail = -1;
+
+	constexpr int RequestTooLong = -10001;
+	constexpr int RequestUnknown = -10002;
+
+	constexpr int RegisterNameDuplicate = -10101;
+	constexpr int RegisterBadCheck = -10102;
+
 	class Node
 	{
 	public:
@@ -20,6 +34,8 @@ namespace TinyROS
 		static void SetUpNameHash();
 		static void ScanForMaster();
 		static void LoadIPList();
+		static void RegisterSelf();
+		static void UnregisterSelf();
 		static void MasterReceiveThread();
 	private:
 		class NodeImplementData;

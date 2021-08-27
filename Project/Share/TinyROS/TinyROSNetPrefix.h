@@ -13,6 +13,7 @@
 	#define CloseSocket close
 	#define ErrorCode errno
 	#define RECEIVE_TIMEOUT EAGAIN
+	#define MESSAGE_TOO_LONG EMSGSIZE
 #elif __TINYROS_ON_WINDOWS_PRIDEF__
 	#include <WinSock2.h>
 	#include <Iphlpapi.h>
@@ -22,4 +23,5 @@
 	#define CloseSocket closesocket
 	#define ErrorCode WSAGetLastError()
 	#define RECEIVE_TIMEOUT WSAETIMEDOUT
+	#define MESSAGE_TOO_LONG WSAEMSGSIZE
 #endif

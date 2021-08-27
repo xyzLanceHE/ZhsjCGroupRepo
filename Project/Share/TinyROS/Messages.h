@@ -14,6 +14,12 @@ namespace TinyROS
 		std::string ToHexString(bool uppercase = false);
 	};
 
+	class SHA256ValueComparator
+	{
+	public:
+		bool operator()(const SHA256Value& left, const SHA256Value& right) const;
+	};
+
 	struct MasterBroadcastDatagram
 	{
 		int ListenPort;
