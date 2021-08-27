@@ -5,6 +5,9 @@
 #define PI 3.1415926
 using namespace std;
 
+#error 致吴勇同志：你TM能不能好好看下文件，让你写在命名空间里你不写
+
+#error 请再次阅读命名规范
 struct location
 {
 	int x;
@@ -60,6 +63,8 @@ void setPoint(int a[20][20], int carx, int cary, int targetx, int targety)
 void getBarrierDir(double* barrierAngle, int carx, int cary, int maxBarrierX, int maxBarrierY, int minBarrierX, int minBarrierY)
 {
 	double maxAngle, minAngle, temp;
+#error atan不包含象限信息，无法判断角度属于哪个象限，请考虑使用atan2
+#error 请考虑使用标准库rtod函数将弧度转化为角度
 	maxAngle = atan((maxBarrierY - cary) / (maxBarrierY - carx)) / PI * 180.0;
 	minAngle = atan((minBarrierY - cary) / (minBarrierY - carx)) / PI * 180.0;
 	if (maxAngle < minAngle)
@@ -79,7 +84,7 @@ double getDefaultDir(int carx, int cary, int targetx, int targety)
 	return angle;
 }
 
-
+#error do you mean straight?
 int canGoStraite(double defaultAngle, double maxAngle, double minAngle)
 {
 	if (defaultAngle > maxAngle || defaultAngle < minAngle)

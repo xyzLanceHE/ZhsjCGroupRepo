@@ -1,8 +1,10 @@
 ﻿#include <iostream>
+#include <string>
 #include "TinyROS/TinyROS.h"
 
 int main()
 {
+    
     try
     {
         TinyROS::Node::Init("hello");

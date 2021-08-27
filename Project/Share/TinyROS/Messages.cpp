@@ -52,4 +52,7 @@ namespace TinyROS
 		int compareResult = memcmp(&left, &right, sizeof(SHA256Value));
 		return compareResult < 0;
 	}
+
+
+
 }
