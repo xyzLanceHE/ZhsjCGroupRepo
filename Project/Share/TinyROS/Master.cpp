@@ -17,28 +17,31 @@
 #include <chrono>
 #include <csignal>
 #include <map>
+#include <mutex>
+#include <set>
+#include "OpenSSL/include/sha.h"
 #include "JsonCpp/include/json.h"
 
 namespace TinyROS
 {
-	using TopicList = std::vector<TopicID>;
-
-
+	using TopicSet = std::set<SHA256Value, SHA256ValueComparator>;
+	
 	struct NodeInformation
 	{
 		std::string Name;
-		TopicList Subscribed;
-		TopicList Published;
+		TopicSet Subscribed;
+		TopicSet Published;
 	};
 
 	struct TopicInformation
 	{
+		TopicPort Port;
 		std::string Name;
 		TypeIDHash Type;
 	};
 
-	using NodeDictionary = std::map<SHA256Value, NodeInformation>;
-	using TopicDictionary = std::map<TopicID, std::string>;
+	using NodeDictionary = std::map<SHA256Value, NodeInformation, SHA256ValueComparator>;
+	using TopicDictionary = std::map<SHA256Value, TopicInformation, SHA256ValueComparator>;
 
 	class Master::MasterImplementData
 	{
@@ -50,6 +53,8 @@ namespace TinyROS
 		int ListenPort;
 		int MulticastLocalBindPort;
 		bool IsConfigSet;
+		int TopicStartPort;
+		int NextTopicPort;
 
 		int ExitFlag;
 		bool IsRunning;
@@ -63,6 +68,11 @@ namespace TinyROS
 
 		NodeDictionary Nodes;
 		TopicDictionary Topics;
+
+		enum class NodeOperationType { Register, Unregister };
+		enum class TopicOperationType { Publish, Subscribe };
+		std::mutex NodesOperationMutex;
+		std::mutex TopicsOperationMutex;
 	public:
 		MasterImplementData()
 		{
@@ -71,6 +81,7 @@ namespace TinyROS
 			this->MulticastPort = 0;
 			this->ListenPort = 0;
 			this->MulticastLocalBindPort = 0;
+			this->TopicStartPort = 6670;
 			this->IsConfigSet = false;
 			this->ExitFlag = 0b00;
 			this->IsRunning = false;
@@ -79,6 +90,11 @@ namespace TinyROS
 			this->BroadcastMessage.Signal = 0;
 			this->BroadcastMessage.ListenPort = 0;
 		}
+
+		void RequestTooLongHandler(sockaddr_in* srcAddr);
+		void RequestHandler(char* buf, int len, sockaddr_in* srcAddr);
+		void HandleNodeOperation(NodeOperationType type, SHA256Value receivedHash, std::string name, sockaddr_in* srcAddr);
+		void HandleTopicOperation(TopicOperationType type, SHA256Value nodeHash, SHA256Value topicNameHash, std::string topicName, TypeIDHash hash, bool createIfNo, sockaddr_in* srcAddr);
 	};
 
 	Master::MasterImplementData* const Master::implData = new Master::MasterImplementData();
@@ -113,6 +129,7 @@ namespace TinyROS
 
 		Master::SetUpSocket();
 
+		Master::implData->NextTopicPort = Master::implData->TopicStartPort;
 		Master::implData->BroadcastMessage.Signal = 1;
 		std::thread listenThread = std::thread(Master::ListenThread);
 		std::thread multicastThread = std::thread(Master::BroadcastThread);
@@ -169,7 +186,7 @@ namespace TinyROS
 		std::ifstream fileIn(configPath, std::ios::binary);
 		if (!fileIn.is_open())
 		{
-			throw std::exception();
+			throw InvalidConfigException("未能加载配置文件，请检查文件路径");
 		}
 		std::stringstream configSS;
 		std::string configJsonStr;
@@ -186,6 +203,7 @@ namespace TinyROS
 			Master::implData->MulticastPort = config["MulticastPort"].asInt();
 			Master::implData->ListenPort = config["ListenPort"].asInt();
 			Master::implData->MulticastLocalBindPort = config["MulticastLocalBindPort"].asInt();
+			Master::implData->TopicStartPort = config["TopicStartPort"].asInt();
 			Master::implData->IsConfigSet = true;
 		}
 		else
@@ -206,6 +224,7 @@ namespace TinyROS
 		config["MulticastPort"] = Master::implData->MulticastPort;
 		config["ListenPort"] = Master::implData->ListenPort;
 		config["MulticastLocalBindPort"] = Master::implData->MulticastLocalBindPort;
+		config["TopicStartPort"] = Master::implData->TopicStartPort;
 
 		Json::StreamWriterBuilder swBuilder;
 		std::unique_ptr<Json::StreamWriter> const sWriter(swBuilder.newStreamWriter());
@@ -384,7 +403,30 @@ namespace TinyROS
 				Master::implData->ExitFlag &= 0b01;
 				break;
 			}
-			
+
+			char* buf = new char[128];
+			sockaddr_in* nodeAddr = new sockaddr_in;
+			socklen_t addrLen = sizeof(sockaddr_in);
+
+			int rcvdLen = recvfrom(Master::implData->ListenSocketFD, buf, 128,
+				0, reinterpret_cast<sockaddr*>(nodeAddr), &addrLen);
+			if (rcvdLen == -1)
+			{
+				int err = ErrorCode;
+				if (err == MESSAGE_TOO_LONG)
+				{
+					// 该线程负责回收nodeAddr
+					std::thread handleTooLongMsg(&Master::MasterImplementData::RequestTooLongHandler, Master::implData, nodeAddr);
+					handleTooLongMsg.detach();
+				}
+				delete[] buf;
+			}
+			else
+			{
+				// 该线程负责回收buf和nodeAddr
+				std::thread handleLongMsg(&Master::MasterImplementData::RequestHandler, Master::implData, buf, rcvdLen, nodeAddr);
+				handleLongMsg.detach();
+			}
 		}
 	}
 
@@ -407,5 +449,213 @@ namespace TinyROS
 			Master::implData->KeyboardInterruptFlag = true;
 			exit(0);
 		}
+	}
+
+	void Master::MasterImplementData::RequestTooLongHandler(sockaddr_in* srcAddr)
+	{
+		int replyMsg[2] = { RequestFail, RequestTooLong };
+		int sentLen = sendto(this->ListenSocketFD, reinterpret_cast<char*>(replyMsg),
+			sizeof(replyMsg), 0, reinterpret_cast<sockaddr*>(srcAddr), sizeof(sockaddr_in));
+		if (sentLen == -1)
+		{
+
+		}
+		delete srcAddr;
+	}
+
+	void Master::MasterImplementData::RequestHandler(char* buf, int len, sockaddr_in* srcAddr)
+	{
+		int* pRequestType = reinterpret_cast<int*>(buf);
+		switch (*pRequestType)
+		{
+		case RequestRegister:
+		{
+			SHA256Value rcvdSHA;
+			std::copy(buf + HeadLen, buf + HeadLen + HashLen, reinterpret_cast<char*>(&rcvdSHA));
+			std::string name(buf + HeadLen + HashLen, len - HeadLen - HashLen);
+			this->HandleNodeOperation(NodeOperationType::Register, rcvdSHA, name, srcAddr);
+			break;
+		}
+		case RequestPublish:
+		case RequestSubscribe:
+		{
+			SHA256Value nodeSHA;
+			SHA256Value topicNameSHA;
+			std::copy(buf + HeadLen, buf + HeadLen + HashLen, reinterpret_cast<char*>(&nodeSHA));
+			std::copy(buf + HeadLen + HashLen, buf + HeadLen + 2 * HashLen, reinterpret_cast<char*>(&topicNameSHA));
+			TypeIDHash type = *(reinterpret_cast<TypeIDHash*>(buf + HeadLen + 2 * HashLen));
+			bool createIfNotExist = *(reinterpret_cast<bool*>(buf + HeadLen + 2 * HashLen + TopicTypeLen));
+			constexpr int prefixLen = HeadLen + 2 * HashLen + TopicTypeLen + FlagLen;
+			std::string topicName(buf + prefixLen, len - prefixLen);
+			
+			TopicOperationType opType = TopicOperationType::Publish;
+			if (*pRequestType == RequestSubscribe)
+			{
+				opType = TopicOperationType::Subscribe;
+			}
+			this->HandleTopicOperation(opType, nodeSHA, topicNameSHA, topicName,
+				type, createIfNotExist, srcAddr);
+			break;
+		}
+		case RequestUnregister:
+		{
+
+			break;
+		}
+		default:
+			break;
+		}
+
+		delete srcAddr;
+		delete[] buf;
+	}
+
+	void Master::MasterImplementData::HandleNodeOperation(NodeOperationType type, SHA256Value receivedHash, std::string name, sockaddr_in* srcAddr)
+	{
+		switch (type)
+		{
+		case TinyROS::Master::MasterImplementData::NodeOperationType::Register:
+		{
+			SHA256Value calculatedHash;
+			SHA256(reinterpret_cast<const unsigned char*>(name.c_str()), name.size(), calculatedHash.value);
+			int msg[2];
+			if (calculatedHash != receivedHash)
+			{
+				msg[0] = RequestFail;
+				msg[1] = RegisterBadCheck;
+				std::cout << "Node注册的hash校验失败:" << name << std::endl;
+			}
+			else
+			{
+				this->NodesOperationMutex.lock();
+				if (this->Nodes.find(calculatedHash) == this->Nodes.end())
+				{
+					this->Nodes[calculatedHash] = { name, TopicSet(), TopicSet() };
+					msg[0] = RequestSuccess;
+					msg[1] = RequestSuccess;
+					std::cout << "Node注册成功:" << name << std::endl;
+				}
+				else
+				{
+					msg[0] = RequestFail;
+					msg[1] = RegisterNameDuplicate;
+					std::cout << "Node名称重复，注册失败:" << name << std::endl;
+				}
+				this->NodesOperationMutex.unlock();
+			}
+			int sentLen = sendto(this->ListenSocketFD, reinterpret_cast<char*>(msg), sizeof(msg), 0,
+				reinterpret_cast<sockaddr*>(srcAddr), sizeof(sockaddr_in));
+			if (sentLen == -1)
+			{
+
+			}
+			break;
+		}
+		case TinyROS::Master::MasterImplementData::NodeOperationType::Unregister:
+		{
+			
+			break;
+		}
+		default:
+			break;
+		}
+	}
+
+	void Master::MasterImplementData::HandleTopicOperation(TopicOperationType opType, SHA256Value nodeHash, SHA256Value topicNameHash, std::string topicName, TypeIDHash topicTypeHash, bool createIfNo, sockaddr_in* srcAddr)
+	{
+		SHA256Value calculatedHash;
+		SHA256(reinterpret_cast<const unsigned char*>(topicName.c_str()), topicName.size(), calculatedHash.value);
+
+		int msg[3];
+		if (calculatedHash != topicNameHash)
+		{
+			msg[0] = RequestFail;
+			msg[1] = TopicNameBadCheck;
+			std::cout << "topicID的hash校验失败:" << topicName << std::endl;
+		}
+
+		int port;
+
+		this->TopicsOperationMutex.lock();
+		if (this->Topics.find(topicNameHash) == this->Topics.end())
+		{
+			if (createIfNo)
+			{
+				port = this->NextTopicPort;
+				this->NextTopicPort++;
+				this->Topics[topicNameHash] = { port, topicName, topicTypeHash };
+				msg[0] = RequestSuccess;
+				msg[1] = port;
+				msg[2] = port;
+			}
+			else
+			{
+				msg[0] = RequestFail;
+				msg[1] = TopicNotExist;
+			}
+		}
+		else
+		{
+			if (this->Topics[topicNameHash].Type == topicTypeHash)
+			{
+				port = this->NextTopicPort;
+				this->NextTopicPort++;
+				msg[0] = RequestSuccess;
+				msg[1] = port;
+				msg[2] = port;
+			}
+			else
+			{
+				msg[0] = RequestFail;
+				msg[1] = TopicTypeError;
+			}
+		}
+		this->TopicsOperationMutex.unlock();
+
+		this->NodesOperationMutex.lock();
+		if (this->Nodes.find(nodeHash) == this->Nodes.end())
+		{
+			msg[0] = RequestFail;
+			msg[1] = UnregisteredNode;
+			// 如果刚才新增了话题，要不要撤销？
+			// 懒得写了
+		}
+		else
+		{
+			switch (opType)
+			{
+			case TinyROS::Master::MasterImplementData::TopicOperationType::Publish:
+				if (this->Nodes[nodeHash].Published.find(topicNameHash) == this->Nodes[nodeHash].Published.end())
+				{
+					this->Nodes[nodeHash].Published.insert(topicNameHash);
+				}
+				else
+				{
+					msg[0] = RequestFail;
+					msg[1] = AlreadyPubToTopic;
+				}
+				break;
+			case TinyROS::Master::MasterImplementData::TopicOperationType::Subscribe:
+				if (this->Nodes[nodeHash].Subscribed.find(topicNameHash) == this->Nodes[nodeHash].Subscribed.end())
+				{
+					this->Nodes[nodeHash].Subscribed.insert(topicNameHash);
+				}
+				else
+				{
+					msg[0] = RequestFail;
+					msg[1] = AlreadySubFromTopic;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		this->NodesOperationMutex.unlock();
+		int sentLen = sendto(this->ListenSocketFD, reinterpret_cast<char*>(msg), sizeof(msg), 0,
+			reinterpret_cast<sockaddr*>(srcAddr), sizeof(sockaddr_in));
+		if (sentLen == -1)
+		{
+
+		}	
 	}
 }

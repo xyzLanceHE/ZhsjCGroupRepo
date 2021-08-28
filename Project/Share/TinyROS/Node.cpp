@@ -1,5 +1,4 @@
 #include "Node.h"
-#include "Messages.h"
 #include "Exceptions.h"
 #include <cstdio>
 #include <string>
@@ -7,6 +6,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <algorithm>
 #include "OpenSSL/include/sha.h"
 
 #ifndef __TINYROS_PLATFORM__
@@ -52,6 +52,7 @@ namespace TinyROS
         }
 
         Node::implData->Name = name;
+        std::cout << Node::implData->Name << std::endl;
         Node::SetUpNameHash();
 
         Node::LoadIPList();
@@ -73,6 +74,8 @@ namespace TinyROS
 
         Node::implData->BoradcastPort = Node::NodeImplementData::DefaultBroadcastPort;
         Node::SetUpSocket();
+
+        Node::RegisterSelf();
 
         Node::IsInitialized = true;
 
@@ -106,7 +109,7 @@ namespace TinyROS
         int ret;
 
         // MasterTalkerSocketFD用于主动向Master通信
-        // 不需要绑定
+        // 不需要绑定， 具有接收超时限制
 #if __TINYROS_ON_WINDOWS_PRIDEF__
         int timeout = 3000; //3s
 #elif __TINYROS_ON_LINUX_PRIDEF__
@@ -128,6 +131,13 @@ namespace TinyROS
         if (ret != 0)
         {
             throw NodeInitializeFailedException("设置端口复用失败");
+        }
+
+        ret = setsockopt(implData->MasterReceiverSocketFD, SOL_SOCKET, SO_RCVTIMEO,
+            reinterpret_cast<char*>(&timeout), sizeof(timeout));
+        if (ret != 0)
+        {
+            throw NodeInitializeFailedException("超时设置失败");
         }
 
         sockaddr_in multicastAddr;
@@ -348,6 +358,74 @@ namespace TinyROS
 #endif
     }
 
+    void Node::RegisterSelf()
+    {
+        int nameLen = Node::implData->Name.size();
+        int totalLen = nameLen + HeadLen + HashLen;
+        char* registerMsgBuf = new char[totalLen];
+        int* pHead = reinterpret_cast<int*>(registerMsgBuf);
+        *pHead = RequestRegister;
+        std::copy(Node::implData->NameHash.value, Node::implData->NameHash.value + HashLen, 
+            reinterpret_cast<unsigned char*>(registerMsgBuf + HeadLen));
+        std::copy(Node::implData->Name.begin(), Node::implData->Name.end(), 
+            reinterpret_cast<unsigned char*>(registerMsgBuf + HeadLen + HashLen));
+
+        sockaddr_in addr;
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(Node::implData->MasterListenPort);
+        addr.sin_addr = Node::implData->MasterListenAddr;
+        int sentLen = sendto(Node::implData->MasterTalkerSocketFD, registerMsgBuf, totalLen,
+            0, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+        delete[] registerMsgBuf;
+
+        char* replyBuf = new char[32];
+        int recvdLen = recvfrom(Node::implData->MasterTalkerSocketFD, replyBuf,
+            32, 0, nullptr, nullptr);
+        if (sentLen == -1 || recvdLen == -1)
+        {
+            delete[] replyBuf;
+            throw NodeInitializeFailedException("未能向Master注册自己，可能是网络不佳");
+        }
+
+        int* pIntBuf = reinterpret_cast<int*>(replyBuf);
+        if (pIntBuf[0] == RequestSuccess)
+        {
+            std::cout << "注册成功\n";
+        }
+        else if (pIntBuf[0] == RequestFail)
+        {
+            switch (pIntBuf[1])
+            {
+            case RequestTooLong:
+                delete[] replyBuf;
+                throw NodeInitializeFailedException("节点名称太长，注册失败");
+                break;
+            case RegisterNameDuplicate:
+                delete[] replyBuf;
+                throw NodeInitializeFailedException("节点名称重复，注册失败");
+                break;
+            case RegisterBadCheck:
+                delete[] replyBuf;
+                throw NodeInitializeFailedException("注册信息校验失败，可能是网络不佳");
+                break;
+            default:
+                delete[] replyBuf;
+                throw NodeInitializeFailedException("未能向Master注册自己，可能是网络不佳");
+                break;
+            }
+        }
+        else
+        {
+            delete[] replyBuf;
+            throw NodeInitializeFailedException("未能向Master注册自己，未知的错误");
+        }
+    }
+
+    void Node::UnregisterSelf()
+    {
+
+    }
+
     void Node::MasterReceiveThread()
     {
         int recvTimeoutCount = 0;
@@ -391,15 +469,96 @@ namespace TinyROS
         }
     }
 
-    TopicID NodeInnerMethods::RequestTopic(const char* topicName)
+    TopicPort NodeInnerMethods::RequestTopic(const char* topicName, int type, TypeIDHash topicType, bool createIfNotExist)
     {
-        return -1; 
-        sendto(Node::implData->MasterTalkerSocketFD, nullptr, 0, 0, nullptr, 0);
-    }
+        if (!Node::IsInitialized)
+        {
+            throw NodeException("Node未初始化，无法进行此项操作");
+        }
 
-    TopicID NodeInnerMethods::GetTopic(const char* topicName)
-    {
+        std::string name(topicName);
+        int nameLen = name.size();
+        constexpr int prefixLen = HeadLen + 2 * HashLen + TopicTypeLen + FlagLen;
+        int totalLen = prefixLen + nameLen;
+
+        char* msgBuf = new char[totalLen];
+        int* pHead = reinterpret_cast<int*>(msgBuf);
+        *pHead = type;
+        std::copy(reinterpret_cast<char*>(Node::implData->NameHash.value),
+            reinterpret_cast<char*>(Node::implData->NameHash.value) + HashLen,
+            msgBuf + HeadLen);
+        SHA256Value topicNameHash;
+        SHA256(reinterpret_cast<const unsigned char*>(name.c_str()), nameLen,
+            topicNameHash.value);
+        std::copy(reinterpret_cast<char*>(topicNameHash.value),
+            reinterpret_cast<char*>(topicNameHash.value) + HashLen,
+            msgBuf + HeadLen + HashLen);
+        TypeIDHash* pTypeID = reinterpret_cast<TypeIDHash*>(msgBuf + HeadLen + 2 * HashLen);
+        *pTypeID = topicType;
+        bool* pFlag = reinterpret_cast<bool*>(msgBuf + HeadLen + 2 * HashLen + TopicTypeLen);
+        *pFlag = createIfNotExist;
+        std::copy(name.begin(), name.end(), msgBuf + prefixLen);
+
+        sockaddr_in addr;
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(Node::implData->MasterListenPort);
+        addr.sin_addr = Node::implData->MasterListenAddr;
+        int sentLen = sendto(Node::implData->MasterTalkerSocketFD, msgBuf, totalLen,
+            0, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+        delete[] msgBuf;
+
+        if (sentLen == -1)
+        {
+            throw TopicException("未能发出话题请求，可能是网络不佳");
+        }
+
+        int recvBuf[8];
+        int rcvdLen = recvfrom(Node::implData->MasterTalkerSocketFD, reinterpret_cast<char*>(recvBuf), sizeof(recvBuf),
+            0, nullptr, nullptr);
+        if (rcvdLen == -1)
+        {
+            throw TopicException("未能收到话题请求的响应，可能是网络不佳");
+        }
+
+        if (recvBuf[0] == RequestSuccess)
+        {
+            if (recvBuf[1] == recvBuf[2]) // Master会把一个值返回两遍，用于简单校验
+            {
+                std::cout << "成功获取话题\n";
+                return recvBuf[1];
+            }
+            else
+            {
+                throw TopicException("TopicID校验失败");
+            }
+        }
+        else if(recvBuf[0] == RequestFail)
+        {
+            switch (recvBuf[1])
+            {
+            case TopicNameBadCheck:
+                throw TopicException("请求信息校验失败，可能是网络不佳");
+                break;
+            case TopicNotExist:
+                throw TopicException("要请求的话题不存在");
+                break;
+            case TopicTypeError:
+                throw TopicException("申请的话题类型不匹配");
+                break;
+            case UnregisteredNode:
+                throw TopicException("节点未注册，话题申请失败");
+                break;
+            default:
+                throw TopicException("未能申请到话题，未知的错误");
+                break;
+            }
+        }
+        else
+        {
+            throw TopicException("未能申请到话题，未知的错误");
+        }
         return -1;
     }
+
 
 }

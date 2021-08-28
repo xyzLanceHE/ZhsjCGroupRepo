@@ -46,4 +46,13 @@ namespace TinyROS
 		TypeID id(typeid(Message));
 		return id;
 	}
+
+	bool SHA256ValueComparator::operator()(const SHA256Value& left, const SHA256Value& right) const
+	{
+		int compareResult = memcmp(&left, &right, sizeof(SHA256Value));
+		return compareResult < 0;
+	}
+
+
+
 }

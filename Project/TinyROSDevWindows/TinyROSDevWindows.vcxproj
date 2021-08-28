@@ -148,6 +148,11 @@
     </Library>
     <Library Include="..\Share\OpenSSL\lib\Windows_x64\libcrypto_static_x64.lib" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Update="E:\OneDrive\综合设计与实践C\ZhsjCGroupRepo\Project\Share\SimpleObjectMessage.templateImplement">
+      <FileType>Document</FileType>
+    </ClCompile>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

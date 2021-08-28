@@ -17,10 +17,17 @@ namespace TinyROS
 		std::string whatMessage;
 	};
 
-	class NodeInitializeFailedException : public TinyROSException
+	class NodeException : public TinyROSException
 	{
 	public:
 		using TinyROSException::TinyROSException;
+		virtual ~NodeException() {}
+	};
+
+	class NodeInitializeFailedException : public NodeException
+	{
+	public:
+		using NodeException::NodeException;
 		//virtual const char* what() noexcept;
 		virtual ~NodeInitializeFailedException() {}
 	};
@@ -46,5 +53,12 @@ namespace TinyROS
 	public:
 		using TinyROSException::TinyROSException;
 		virtual ~InvalidConfigException() {}
+	};
+
+	class TopicException : public TinyROSException
+	{
+	public:
+		using TinyROSException::TinyROSException;
+		virtual ~TopicException() {}
 	};
 }
