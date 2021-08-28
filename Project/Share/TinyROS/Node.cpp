@@ -568,5 +568,10 @@ namespace TinyROS
         return Node::implData->BroadcastIP.c_str();
     }
 
+    const char* NodeInnerMethods::GetLocalIP()
+    {
+        return Node::implData->LocalIP.c_str();
+    }
+
 
 }

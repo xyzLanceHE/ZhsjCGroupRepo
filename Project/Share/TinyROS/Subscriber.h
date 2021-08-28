@@ -1,6 +1,7 @@
 #pragma once
 #include "TinyROSPlatformDef.h"
 #include "TinyROSDef.h"
+#include "Exceptions.h"
 
 namespace TinyROS
 {
@@ -77,6 +78,15 @@ namespace TinyROS
 		this->pCallbackObject = executorObject;
 		this->ObjectCallback = callback;
 		this->UnrestrictedCallback = nullptr;
+		try
+		{
+			this->impl->Init();
+		}
+		catch (TinyROSException& e)
+		{
+			delete this->impl;
+			throw e;
+		}
 	}
 
 	template<typename TMessage, typename TCallbackObject>

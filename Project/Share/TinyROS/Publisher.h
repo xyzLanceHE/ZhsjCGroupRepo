@@ -1,6 +1,7 @@
 #pragma once
 #include "TinyROSPlatformDef.h"
 #include "TinyROSDef.h"
+#include "Exceptions.h"
 
 namespace TinyROS
 {
@@ -50,9 +51,9 @@ namespace TinyROS
 		this->impl = new PublisherImplement(topicName, typeIdHash);
 		try
 		{
-			this->impl->Init()
+			this->impl->Init();
 		}
-		catch(TinyROSException& e)
+		catch (TinyROSException& e)
 		{
 			delete this->impl;
 			throw e;
