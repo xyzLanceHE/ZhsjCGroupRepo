@@ -9,7 +9,9 @@ namespace TinyROS
 	{
 	public:
 		~PublisherImplement();
+		class PublisherInnerNetwork;
 	private:
+		void Init(); // 单独初始化，避免构造函数抛异常导致无法析构
 		void InnerPublish(const char* buf, int len);
 	private:
 		// 虽然这个类不是模板，但是放在Publisher内部的话，定义还是会带模板
@@ -18,7 +20,6 @@ namespace TinyROS
 		PublisherImplement() = delete;
 		PublisherImplement(const char* topicName, TypeIDHash typdIdHash);
 		template<typename TMessage> friend class Publisher;
-		class PublisherInnerNetwork;
 		PublisherInnerNetwork* innerImpl;
 	};
 	
@@ -47,6 +48,15 @@ namespace TinyROS
 		TypeID typedId(typeid(TMessage));
 		TypeIDHash typeIdHash = typedId.hash_code();
 		this->impl = new PublisherImplement(topicName, typeIdHash);
+		try
+		{
+			this->impl->Init()
+		}
+		catch(TinyROSException& e)
+		{
+			delete this->impl;
+			throw e;
+		}
 	}
 
 	template<typename TMessage>

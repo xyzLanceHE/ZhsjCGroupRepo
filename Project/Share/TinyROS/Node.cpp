@@ -23,6 +23,7 @@ namespace TinyROS
     public:
         std::vector<std::string> IpStrList;
         std::string LocalIP;
+        std::string BroadcastIP;
         SOCKET MasterReceiverSocketFD;
         SOCKET MasterTalkerSocketFD;
         std::string Name;
@@ -74,6 +75,7 @@ namespace TinyROS
         Node::ScanForMaster();
 
         Node::implData->BoradcastPort = Node::NodeImplementData::DefaultBroadcastPort;
+        Node::implData->BroadcastIP = Node::NodeImplementData::DefaultBroadcastIP;
         Node::SetUpSocket();
 
         Node::RegisterSelf();
@@ -152,7 +154,7 @@ namespace TinyROS
         }
 
         ip_mreq multicastOption;
-        inet_pton(AF_INET, Node::NodeImplementData::DefaultBroadcastIP, &multicastOption.imr_multiaddr);
+        inet_pton(AF_INET, Node::implData->BroadcastIP.c_str(), &multicastOption.imr_multiaddr);
         inet_pton(AF_INET, Node::implData->LocalIP.c_str(), &multicastOption.imr_interface);
         ret = setsockopt(Node::implData->MasterReceiverSocketFD, IPPROTO_IP, IP_ADD_MEMBERSHIP,
             reinterpret_cast<char*>(&multicastOption), sizeof(multicastOption));
@@ -470,7 +472,7 @@ namespace TinyROS
         }
     }
 
-    TopicPort NodeInnerMethods::RequestTopic(const char* topicName, int type, TypeIDHash topicType, bool createIfNotExist)
+    TopicPort NodeInnerMethods::RequestTopic(const char* topicName, int requestType, TypeIDHash topicType, bool createIfNotExist)
     {
         if (!Node::IsInitialized)
         {
@@ -484,7 +486,7 @@ namespace TinyROS
 
         char* msgBuf = new char[totalLen];
         int* pHead = reinterpret_cast<int*>(msgBuf);
-        *pHead = type;
+        *pHead = requestType;
         std::copy(reinterpret_cast<char*>(Node::implData->NameHash.value),
             reinterpret_cast<char*>(Node::implData->NameHash.value) + HashLen,
             msgBuf + HeadLen);
@@ -559,6 +561,11 @@ namespace TinyROS
             throw TopicException("未能申请到话题，未知的错误");
         }
         return -1;
+    }
+
+    const char* NodeInnerMethods::GetBroadcastIP()
+    {
+        return Node::implData->BroadcastIP.c_str();
     }
 
 

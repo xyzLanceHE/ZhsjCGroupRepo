@@ -32,8 +32,10 @@ namespace TinyROS
 	class NodeInnerMethods
 	{
 	private:
-		static TopicPort RequestTopic(const char* topicName, int type, TypeIDHash topicType, bool createIfNotExist = true);
-		template<typename TMessage, typename TCallbackObject> friend class Subscriber;
-		template<typename TMessage> friend class Publisher;
+		static TopicPort RequestTopic(const char* topicName, int requestType, TypeIDHash topicType, bool createIfNotExist = true);
+		static const char* GetBroadcastIP();
+		static const char* GetLocalIP();
+		friend class PublisherImplement::PublisherInnerNetwork;
+		friend class SubscriberImplement::SubscriberInnerNetwork;
 	};
 }

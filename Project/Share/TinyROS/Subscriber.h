@@ -21,8 +21,9 @@ namespace TinyROS
 	{
 	public:
 		~SubscriberImplement();
+		class SubscriberInnerNetwork;
 	private:
-		void SubscribeThread();
+		void Init();
 		void OnRawMessageReceived(const char* buf, int len);
 		ISubscriberInvoker* SubscriberInterface;
 	private:
@@ -30,7 +31,6 @@ namespace TinyROS
 		SubscriberImplement() = delete;
 		SubscriberImplement(const char* topicName, TypeIDHash typeIdHash);
 		template<typename TMessage, typename TCallbackObject> friend class Subscriber;
-		class SubscriberInnerNetwork;
 		SubscriberInnerNetwork* innerImpl;
 	};
 

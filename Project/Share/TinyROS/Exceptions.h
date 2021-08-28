@@ -61,4 +61,12 @@ namespace TinyROS
 		using TinyROSException::TinyROSException;
 		virtual ~TopicException() {}
 	};
+
+	// 表示订阅或者发布初始化网络通信时的异常
+	class CommunicateException : public TinyROSException
+	{
+	public:
+		using TinyROSException::TinyROSException;
+		virtual ~CommunicateException() {}
+	};
 }
