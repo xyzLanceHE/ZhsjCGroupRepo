@@ -4,7 +4,7 @@
 
 int main()
 {
-    
+    TinyROS::Publisher<TinyROS::SimpleObjectMessage<int>> p("");
     try
     {
         TinyROS::Node::Init("hello");
