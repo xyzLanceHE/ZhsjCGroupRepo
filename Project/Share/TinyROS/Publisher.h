@@ -1,6 +1,6 @@
 #pragma once
 #include "TinyROSPlatformDef.h"
-#include <string>
+#include "TinyROSDef.h"
 
 namespace TinyROS
 {
@@ -16,7 +16,7 @@ namespace TinyROS
 		// 为了把定义放到源文件里，暂且搞成这样，把类拉到Publisher外面，把构造函数声明为private，再把Publiser声明为friend，
 		// 最后还得再套一层内部类的壳，主要是不想引入socket、thread相关的头文件，不知道有没有更好的办法
 		PublisherImplement();
-		PublisherImplement(const char* topicName);
+		PublisherImplement(const char* topicName, TypeIDHash typdIdHash);
 		template<typename TMessage> friend class Publisher;
 		class PublisherInnerNetwork;
 		PublisherInnerNetwork* innerImpl;
@@ -30,6 +30,8 @@ namespace TinyROS
 		Publisher(const char* topicName);
 		Publisher(const Publisher&) = delete;
 		Publisher& operator=(const Publisher&) = delete;
+		~Publisher();
+	public:
 		// 发布消息
 		// useRef指定是否使用msg的引用，区别不大
 		void Publish(TMessage& msg, bool useRef = true);
@@ -42,7 +44,15 @@ namespace TinyROS
 	template<typename TMessage>
 	inline Publisher<TMessage>::Publisher(const char* topicName)
 	{
-		this->impl = new PublisherImplement();
+		TypeID typedId(typeid(TMessage));
+		TypeIDHash typeIdHash = typedId.hash_code();
+		this->impl = new PublisherImplement(topicName, typeIdHash);
+	}
+
+	template<typename TMessage>
+	inline Publisher<TMessage>::~Publisher()
+	{
+		delete this->impl;
 	}
 
 	template<typename TMessage>

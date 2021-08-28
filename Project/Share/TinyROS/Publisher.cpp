@@ -15,7 +15,7 @@ namespace TinyROS
 		SOCKET PublishSocket;
 		std::string TopicName;
 	public:
-		PublisherInnerNetwork(const char* topicName);
+		PublisherInnerNetwork(const char* topicName, TypeIDHash typdIdHash);
 	};
 
 	PublisherImplement::~PublisherImplement()
@@ -28,9 +28,9 @@ namespace TinyROS
 		// this->innerImpl = new PublisherInnerNetwork();
 	}
 
-	PublisherImplement::PublisherImplement(const char* topicName)
+	PublisherImplement::PublisherImplement(const char* topicName, TypeIDHash typdIdHash)
 	{
-		this->innerImpl = new PublisherInnerNetwork(topicName);
+		this->innerImpl = new PublisherInnerNetwork(topicName, typdIdHash);
 	}
 
 	// buf是调用方的string的资源，由于socket另起线程，需要复制一份，防止资源被调用方回收
@@ -39,7 +39,7 @@ namespace TinyROS
 
 	}
 
-	PublisherImplement::PublisherInnerNetwork::PublisherInnerNetwork(const char* topicName)
+	PublisherImplement::PublisherInnerNetwork::PublisherInnerNetwork(const char* topicName, TypeIDHash typdIdHash)
 	{
 		this->TopicName = std::string(topicName);
 	}
