@@ -47,6 +47,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Publisher.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Subscriber.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROS.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROSDef.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROSPlatformDef.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROSNetPrefix.h" />
   </ItemGroup>

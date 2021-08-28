@@ -2,17 +2,21 @@
 #include <string>
 #include "TinyROS/TinyROS.h"
 
+using namespace TinyROS;
+
+
 int main()
 {
-    
-    try
+
+
+
+
+    while (true)
     {
-        TinyROS::Node::Init("hello");
+        break;
     }
-    catch(TinyROS::TinyROSException& e)
-    {
-        std::cout << e.what();
-    }
+ 
+
     int hang;
     std::cin >> hang;
     return 0;

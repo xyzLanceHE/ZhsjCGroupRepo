@@ -1,4 +1,5 @@
 #include "Node.h"
+#include "Messages.h"
 #include "Exceptions.h"
 #include <cstdio>
 #include <string>
