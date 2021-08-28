@@ -15,7 +15,7 @@ namespace TinyROS
 		// 虽然这个类不是模板，但是放在Publisher内部的话，定义还是会带模板
 		// 为了把定义放到源文件里，暂且搞成这样，把类拉到Publisher外面，把构造函数声明为private，再把Publiser声明为friend，
 		// 最后还得再套一层内部类的壳，主要是不想引入socket、thread相关的头文件，不知道有没有更好的办法
-		PublisherImplement();
+		PublisherImplement() = delete;
 		PublisherImplement(const char* topicName, TypeIDHash typdIdHash);
 		template<typename TMessage> friend class Publisher;
 		class PublisherInnerNetwork;

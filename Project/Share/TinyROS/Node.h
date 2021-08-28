@@ -33,7 +33,7 @@ namespace TinyROS
 	{
 	private:
 		static TopicPort RequestTopic(const char* topicName, int type, TypeIDHash topicType, bool createIfNotExist = true);
-		template<typename TMessage> friend class Subscriber;
+		template<typename TMessage, typename TCallbackObject> friend class Subscriber;
 		template<typename TMessage> friend class Publisher;
 	};
 }

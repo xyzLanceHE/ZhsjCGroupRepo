@@ -12,7 +12,7 @@ namespace TinyROS
 	class PublisherImplement::PublisherInnerNetwork
 	{
 	public:
-		SOCKET PublishSocket;
+		SOCKET PublishSocketFD;
 		std::string TopicName;
 	public:
 		PublisherInnerNetwork(const char* topicName, TypeIDHash typdIdHash);
@@ -23,10 +23,6 @@ namespace TinyROS
 		delete this->innerImpl;
 	}
 
-	PublisherImplement::PublisherImplement()
-	{
-		// this->innerImpl = new PublisherInnerNetwork();
-	}
 
 	PublisherImplement::PublisherImplement(const char* topicName, TypeIDHash typdIdHash)
 	{
