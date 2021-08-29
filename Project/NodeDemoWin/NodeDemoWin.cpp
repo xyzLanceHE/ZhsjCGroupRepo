@@ -6,6 +6,12 @@
 #include "TinyROS/TinyROS.h"
 #include <thread>
 
+template <class T>
+void test()
+{
+    std::cout << sizeof(T);
+}
+
 int main()
 {
     std::cout << (typeid(TinyROS::StringMessage)).name() << std::endl << (typeid(TinyROS::StringMessage)).hash_code() << std::endl;
@@ -14,7 +20,7 @@ int main()
     try
     {
         // 一句话即可。参数是本节点的名字，在局域网中必须是唯一的
-        TinyROS::Node::Init("Hello world talker");
+        //TinyROS::Node::Init("Hello world talker");
     }
     catch (TinyROS::TinyROSException& e)
     {
@@ -25,12 +31,13 @@ int main()
     // Node初始化完成之后，可以定义Publisher和Subscriber
     // 本Demo演示Publisher
     // Publisher是一个模板类，模板参数是消息的类型
-    TinyROS::Publisher<TinyROS::StringMessage>* helloer;
+    TinyROS::Publisher* helloer;
     try
     {
         // 构造函数的参数是话题名称。话题不存在时，会自动创建
         // 话题一旦创建，消息的类型是确定的，后续新的Subscriber/Publisher订阅或者发布到此话题，需要与之匹配，否则会抛异常
-        helloer = new TinyROS::Publisher<TinyROS::StringMessage>("HelloWorldTopic");
+        helloer = TinyROS::NewPublisher<TinyROS::StringMessage>("hello");
+        
     }
     catch (TinyROS::TinyROSException& e)
     {
@@ -43,6 +50,7 @@ int main()
     std::string helloStr("Hello wrold");
     while (true)
     {
+        break;
         std::string msgStr = helloStr + std::to_string(num);
         TinyROS::StringMessage msg(msgStr);
         num++;

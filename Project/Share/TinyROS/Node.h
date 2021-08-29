@@ -35,7 +35,7 @@ namespace TinyROS
 		static TopicPort RequestTopic(const char* topicName, int requestType, TypeIDHash topicType, bool createIfNotExist = true);
 		static const char* GetBroadcastIP();
 		static const char* GetLocalIP();
-		friend class PublisherImplement::PublisherInnerNetwork;
-		friend class SubscriberImplement::SubscriberInnerNetwork;
+		//friend class PublisherImplement::PublisherInnerNetwork;
+		//friend class SubscriberImplement::SubscriberInnerNetwork;
 	};
 }
