@@ -6,7 +6,7 @@ namespace TinyROS
 	struct SHA256Value
 	{
 		unsigned char value[32];
-		SHA256Value() {};
+		SHA256Value();
 		SHA256Value(const SHA256Value& other);
 		SHA256Value& operator=(SHA256Value& other);
 		bool operator==(SHA256Value& other);

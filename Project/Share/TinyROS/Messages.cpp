@@ -5,6 +5,11 @@
 
 namespace TinyROS
 {
+	SHA256Value::SHA256Value()
+	{
+		memset(this->value, 0, sizeof(*this));
+	}
+
 	SHA256Value::SHA256Value(const SHA256Value& other)
 	{
 		memmove(this->value, other.value, sizeof(*this));
