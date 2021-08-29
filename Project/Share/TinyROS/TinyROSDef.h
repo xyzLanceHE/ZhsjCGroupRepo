@@ -1,20 +1,20 @@
 #pragma once
 #include <string>
-#include <typeinfo>
-#include <typeindex>
 
 namespace TinyROS
 {
 	struct SHA256Value
 	{
 		unsigned char value[32];
+		SHA256Value() {};
+		SHA256Value(const SHA256Value& other);
+		SHA256Value& operator=(SHA256Value& other);
 		bool operator==(SHA256Value& other);
 		bool operator!=(SHA256Value& other);
 		std::string ToHexString(bool uppercase = false);
 	};
 
-	using TypeID = std::type_index;
-	using TypeIDHash = size_t;
+	using TypeIDHash = SHA256Value;
 	using TopicPort = int;
 
 	constexpr int RequestRegister = 11000 + 0b000;
@@ -41,6 +41,6 @@ namespace TinyROS
 
 	constexpr int HeadLen = sizeof(int);
 	constexpr int HashLen = sizeof(SHA256Value);
-	constexpr int TopicTypeLen = sizeof(TypeIDHash);
+	constexpr int TopicTypeLen = sizeof(SHA256Value);
 	constexpr int FlagLen = sizeof(bool);
 }

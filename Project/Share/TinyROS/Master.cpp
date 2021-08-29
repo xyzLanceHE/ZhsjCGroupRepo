@@ -19,7 +19,8 @@
 #include <map>
 #include <mutex>
 #include <set>
-#include "OpenSSL/include/sha.h"
+#include "LibWrapper.h"
+//#include "OpenSSL/include/sha.h"
 #include "JsonCpp/include/json.h"
 
 namespace TinyROS
@@ -517,7 +518,7 @@ namespace TinyROS
 		case TinyROS::Master::MasterImplementData::NodeOperationType::Register:
 		{
 			SHA256Value calculatedHash;
-			SHA256(reinterpret_cast<const unsigned char*>(name.c_str()), name.size(), calculatedHash.value);
+			SetSHA256InPlace(name.c_str(), name.size(), &calculatedHash);
 			int msg[2];
 			if (calculatedHash != receivedHash)
 			{
@@ -564,7 +565,7 @@ namespace TinyROS
 	void Master::MasterImplementData::HandleTopicOperation(TopicOperationType opType, SHA256Value nodeHash, SHA256Value topicNameHash, std::string topicName, TypeIDHash topicTypeHash, bool createIfNo, sockaddr_in* srcAddr)
 	{
 		SHA256Value calculatedHash;
-		SHA256(reinterpret_cast<const unsigned char*>(topicName.c_str()), topicName.size(), calculatedHash.value);
+		SetSHA256InPlace(topicName.c_str(), topicName.size(), &calculatedHash);
 
 		int msg[3];
 		if (calculatedHash != topicNameHash)
@@ -583,7 +584,11 @@ namespace TinyROS
 			{
 				port = this->NextTopicPort;
 				this->NextTopicPort++;
-				this->Topics[topicNameHash] = { port, topicName, topicTypeHash };
+				TopicInformation info;
+				info.Port = port;
+				info.Name = topicName;
+				info.Type = topicTypeHash;
+				this->Topics[topicNameHash] = info;
 				msg[0] = RequestSuccess;
 				msg[1] = port;
 				msg[2] = port;

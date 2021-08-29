@@ -69,30 +69,11 @@ int main()
         return -1;
     }
 
-    // 临时搬过来试一下自己发布
-    TinyROS::Publisher<TinyROS::StringMessage>* helloer;
-    try
-    {
-        helloer = new TinyROS::Publisher<TinyROS::StringMessage>("HelloWorldTopic");
-    }
-    catch (TinyROS::TinyROSException& e)
-    {
-        std::cout << e.what();
-        return -1;
-    }
-
-    // Subscriber一旦创建便持续生效，但是并不会阻塞， 需要自己保持程序运行
-    int num = 0;
-    std::string helloStr("Hello wrold");
+    
+    // Subscriber一旦创建便持续生效，但是并不会阻塞，需要自己保持程序运行
     while (true)
     {
-        std::string msgStr = helloStr + std::to_string(num);
-        TinyROS::StringMessage msg(msgStr);
-        num++;
-        helloer->Publish(msg);
 
-        using namespace std::chrono_literals;
-        std::this_thread::sleep_for(1s);
     }
 
 

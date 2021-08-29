@@ -6,24 +6,6 @@
 #include "TinyROS/TinyROS.h"
 #include <thread>
 
-void NormalCallback(TinyROS::StringMessage msg)
-{
-    std::cout << "normal callback: I received: " << msg.GetValue() << std::endl;
-}
-
-class SampleClass
-{
-public:
-    std::string Name;
-    SampleClass(std::string name)
-        : Name(name) { }
-    // 类内部的方法作为回调函数，函数签名一样，但是稍后注册方法不同
-    void CallbackInObject(TinyROS::StringMessage msg)
-    {
-        std::cout << "object callback: I am " << this->Name << ", I received: " << msg.GetValue() << std::endl;
-    }
-};
-
 int main()
 {
     std::cout << (typeid(TinyROS::StringMessage)).name() << std::endl << (typeid(TinyROS::StringMessage)).hash_code() << std::endl;
@@ -33,23 +15,6 @@ int main()
     {
         // 一句话即可。参数是本节点的名字，在局域网中必须是唯一的
         TinyROS::Node::Init("Hello world talker");
-    }
-    catch (TinyROS::TinyROSException& e)
-    {
-        std::cout << e.what();
-        return -1;
-    }
-
-    // 暂时搬过来
-    TinyROS::Subscriber<TinyROS::StringMessage>* helloReceiver1;
-    TinyROS::Subscriber<TinyROS::StringMessage, SampleClass>* helloReceiver2;
-    SampleClass sampleObj("Foo");
-    try
-    {
-        helloReceiver1 = new TinyROS::Subscriber<TinyROS::StringMessage>("HelloWorldTopic", NormalCallback);
-        helloReceiver2 = new TinyROS::Subscriber<TinyROS::StringMessage, SampleClass>("HelloWorldTopic", &sampleObj,
-            &SampleClass::CallbackInObject);
-
     }
     catch (TinyROS::TinyROSException& e)
     {

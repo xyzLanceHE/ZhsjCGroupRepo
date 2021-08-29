@@ -1,11 +1,12 @@
 #pragma once
 #include "TinyROSPlatformDef.h"
 #include "TinyROSDef.h"
+#include "LibWrapper.h"
 
 
 namespace TinyROS
 {
-
+	
 	class SHA256ValueComparator
 	{
 	public:
@@ -21,11 +22,15 @@ namespace TinyROS
 	class Message
 	{
 	public:
-		virtual TypeID GetTypeID() = 0;
+		virtual TypeIDHash GetTypeID() = 0;
 		virtual std::string Serialize() = 0;
 		virtual void Deserialize(std::string&) = 0;
 		virtual ~Message() {}
 	};
+
+	template<typename TValue, const char* TypeName>
+	class SimpleObjectMessageTest : public Message
+	{};
 
 
 	// 直接使用对象的内存进行序列化/反序列化，
@@ -35,7 +40,7 @@ namespace TinyROS
 	class SimpleObjectMessage : public Message
 	{
 	public:
-		virtual TypeID GetTypeID();
+		virtual TypeIDHash GetTypeID();
 		virtual std::string Serialize();
 		virtual void Deserialize(std::string& str);
 		virtual ~SimpleObjectMessage() {}
@@ -48,10 +53,13 @@ namespace TinyROS
 	// 模板类必须把定义和声明放在一起，不然gcc编译不过
 	
 	template<typename TValue>
-	inline TypeID SimpleObjectMessage<TValue>::GetTypeID()
+	inline TypeIDHash SimpleObjectMessage<TValue>::GetTypeID()
 	{
-		TypeID id(typeid(SimpleObjectMessage<TValue>));
-		return id;
+		SHA256Value sha;
+		// 暂时不能区分不同的模板实例
+		const std::string name("SimpleObjectMessage");
+		SetSHA256InPlace(name.c_str(), name.size(), &sha);
+		return sha;
 	}
 
 	template<typename TValue>
@@ -94,7 +102,7 @@ namespace TinyROS
 	class SimpleObjectArrayMessage : public Message
 	{
 	public:
-		virtual TypeID GetTypeID();
+		virtual TypeIDHash GetTypeID();
 		virtual std::string Serialize();
 		virtual void Deserialize(std::string& str);
 		virtual ~SimpleObjectArrayMessage();
@@ -116,10 +124,13 @@ namespace TinyROS
 	};
 
 	template<typename TValue>
-	inline TypeID SimpleObjectArrayMessage<TValue>::GetTypeID()
+	inline TypeIDHash SimpleObjectArrayMessage<TValue>::GetTypeID()
 	{
-		TypeID id(typeid(SimpleObjectArrayMessage<TValue>));
-		return id;
+		SHA256Value sha;
+		// 暂时不能区分不同的模板实例
+		const std::string name("SimpleObjecArraytMessage");
+		SetSHA256InPlace(name.c_str(), name.size(), &sha);
+		return sha;
 	}
 
 	template<typename TValue>
@@ -236,7 +247,7 @@ namespace TinyROS
 	class StringMessage : public Message
 	{
 	public:
-		virtual TypeID GetTypeID();
+		virtual TypeIDHash GetTypeID();
 		virtual std::string Serialize();
 		virtual void Deserialize(std::string& str);
 		virtual ~StringMessage() {}
@@ -258,7 +269,7 @@ namespace TinyROS
 	class JsonMessage : public Message
 	{
 	public:
-		virtual TypeID GetTypeID();
+		virtual TypeIDHash GetTypeID();
 		virtual std::string Serialize();
 		virtual void Deserialize(std::string& str);
 		virtual ~JsonMessage();

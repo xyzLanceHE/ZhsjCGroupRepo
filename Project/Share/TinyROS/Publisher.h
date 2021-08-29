@@ -46,9 +46,8 @@ namespace TinyROS
 	template<typename TMessage>
 	inline Publisher<TMessage>::Publisher(const char* topicName)
 	{
-		
-		TypeID typedId(typeid(TMessage));
-		TypeIDHash typeIdHash = typedId.hash_code();
+		TMessage temp;
+		TypeIDHash typeIdHash = temp.GetTypeID();
 		this->impl = new PublisherImplement(topicName, typeIdHash);
 		try
 		{

@@ -5,6 +5,17 @@
 
 namespace TinyROS
 {
+	SHA256Value::SHA256Value(const SHA256Value& other)
+	{
+		memmove(this->value, other.value, sizeof(*this));
+	}
+
+	SHA256Value& SHA256Value::operator=(SHA256Value& other)
+	{
+		memmove(this->value, other.value, sizeof(*this));
+		return *this;
+	}
+
 	bool SHA256Value::operator==(SHA256Value& other)
 	{
 		int result = memcmp(this, &other, sizeof(SHA256Value));
@@ -18,7 +29,7 @@ namespace TinyROS
 
 	std::string SHA256Value::ToHexString(bool uppercase)
 	{
-		char buf[64];
+		char buf[80]; // Win下64会越界，稍微调大一点（或许65就够了？）
 		unsigned char* p = this->value;
 		const char* format;
 		if (uppercase)
@@ -38,13 +49,16 @@ namespace TinyROS
 #endif
 			p++;
 		}
-		return std::string(buf, 64);
+		std::string s(buf, 64);
+		return s;
 	}
 
-	TypeID Message::GetTypeID()
+	TypeIDHash Message::GetTypeID()
 	{
-		TypeID id(typeid(Message));
-		return id;
+		SHA256Value sha;
+		const std::string name("Message");
+		SetSHA256InPlace(name.c_str(), name.size(), &sha);
+		return sha;
 	}
 
 	bool SHA256ValueComparator::operator()(const SHA256Value& left, const SHA256Value& right) const
@@ -53,11 +67,13 @@ namespace TinyROS
 		return compareResult < 0;
 	}
 
-
-	TypeID StringMessage::GetTypeID()
+	
+	TypeIDHash StringMessage::GetTypeID()
 	{
-		TypeID id(typeid(StringMessage));
-		return id;
+		SHA256Value sha;
+		const std::string name("StringMessage");
+		SetSHA256InPlace(name.c_str(), name.size(), &sha);
+		return sha;
 	}
 
 	std::string StringMessage::Serialize()

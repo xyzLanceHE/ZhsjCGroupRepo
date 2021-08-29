@@ -61,8 +61,8 @@ namespace TinyROS
 	template<typename TMessage, typename TCallbackObject>
 	inline Subscriber<TMessage, TCallbackObject>::Subscriber(const char* topicName, MessageCallback callback)
 	{
-		TypeID typedId(typeid(TMessage));
-		TypeIDHash typeIdHash = typedId.hash_code();
+		TMessage temp;
+		TypeIDHash typeIdHash = temp.GetTypeID();
 		this->impl = new SubscriberImplement(topicName, typeIdHash);
 		this->pCallbackObject = nullptr;
 		this->ObjectCallback = nullptr;
@@ -82,8 +82,8 @@ namespace TinyROS
 	template<typename TMessage, typename TCallbackObject>
 	inline Subscriber<TMessage, TCallbackObject>::Subscriber(const char* topicName, TCallbackObject* executorObject, MessageCallbackInObject callback)
 	{
-		TypeID typedId(typeid(TMessage));
-		TypeIDHash typeIdHash = typedId.hash_code();
+		TMessage temp;
+		TypeIDHash typeIdHash = temp.GetTypeID();
 		this->impl = new SubscriberImplement(topicName, typeIdHash);
 		this->pCallbackObject = executorObject;
 		this->ObjectCallback = callback;

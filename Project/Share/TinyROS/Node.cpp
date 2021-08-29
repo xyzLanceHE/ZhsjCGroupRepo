@@ -8,7 +8,8 @@
 #include <thread>
 #include <chrono>
 #include <algorithm>
-#include "OpenSSL/include/sha.h"
+#include "LibWrapper.h"
+//#include "OpenSSL/include/sha.h"
 
 #ifndef __TINYROS_PLATFORM__
 	#error 无效的平台信息
@@ -167,10 +168,10 @@ namespace TinyROS
 
     void Node::SetUpNameHash()
     {
-        SHA256(
-            reinterpret_cast<const unsigned char*>(Node::implData->Name.c_str()),
+        SetSHA256InPlace(
+            Node::implData->Name.c_str(),
             Node::implData->Name.size(),
-            Node::implData->NameHash.value);
+            &Node::implData->NameHash);
     }
 
     void Node::ScanForMaster()
@@ -491,8 +492,8 @@ namespace TinyROS
             reinterpret_cast<char*>(Node::implData->NameHash.value) + HashLen,
             msgBuf + HeadLen);
         SHA256Value topicNameHash;
-        SHA256(reinterpret_cast<const unsigned char*>(name.c_str()), nameLen,
-            topicNameHash.value);
+        SetSHA256InPlace(name.c_str(), nameLen, &topicNameHash);
+        // std::cout << topicNameHash.ToHexString() << std::endl;
         std::copy(reinterpret_cast<char*>(topicNameHash.value),
             reinterpret_cast<char*>(topicNameHash.value) + HashLen,
             msgBuf + HeadLen + HashLen);
@@ -527,7 +528,7 @@ namespace TinyROS
         {
             if (recvBuf[1] == recvBuf[2]) // Master会把一个值返回两遍，用于简单校验
             {
-                std::cout << "成功获取话题\n";
+                std::cout << "成功获取话题 at port " << recvBuf[1] << std::endl;
                 return recvBuf[1];
             }
             else

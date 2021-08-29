@@ -18,6 +18,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_value.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_writer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Exceptions.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\LibWrapper.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Master.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Messages.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Node.cpp" />
@@ -41,6 +42,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\opensslv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\sha.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Exceptions.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\LibWrapper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Master.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Messages.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Node.h" />

@@ -96,6 +96,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROSDef.h">
       <Filter>TinyROS</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\LibWrapper.h">
+      <Filter>TinyROS</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Node.cpp">
@@ -123,6 +126,9 @@
       <Filter>TinyROS</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Subscriber.cpp">
+      <Filter>TinyROS</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\LibWrapper.cpp">
       <Filter>TinyROS</Filter>
     </ClCompile>
   </ItemGroup>
