@@ -30,7 +30,6 @@ public:
 
 int main()
 {
-    std::cout << (typeid(TinyROS::StringMessage)).name() << std::endl << (typeid(TinyROS::StringMessage)).hash_code() << std::endl;
     // TinyROS的所有内容都位于TinyROS命名空间下，（不建议using命名空间，避免冲突）
     // 关于Node：此类用于将本进程初始化为TinyROS的节点，请在程序开始时使用
     try
@@ -51,7 +50,7 @@ int main()
     // 第二个参数可选，如果回调函数是类的方法，则填类名
     TinyROS::Subscriber<TinyROS::StringMessage, SampleClass>* helloReceiver2;
     // 既然类的方法做回调函数，肯定有一个类的对象
-    SampleClass sampleObj("Foo");
+    SampleClass sampleObj("an object");
     try
     {
         // 构造函数的第一个参数是话题名称。话题不存在时，会自动创建
