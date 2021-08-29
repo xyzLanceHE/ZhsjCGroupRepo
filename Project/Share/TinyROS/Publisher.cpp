@@ -50,6 +50,7 @@ namespace TinyROS
 		char* innerBuf = new char[len]; // 该buf由PublishThread回收
 		std::copy(buf, buf + len, innerBuf);
 		std::thread pubThread(&PublisherInnerNetwork::PublishThread, this->innerImpl, innerBuf, len);
+		pubThread.detach();
 	}
 
 	PublisherImplement::PublisherInnerNetwork::PublisherInnerNetwork(const char* topicName, TypeIDHash typdIdHash)

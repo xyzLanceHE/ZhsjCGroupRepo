@@ -63,7 +63,7 @@ namespace TinyROS
 
 	void SubscriberImplement::SubscriberInnerNetwork::InnerInit()
 	{
-		this->BroadcastPort = NodeInnerMethods::RequestTopic(this->TopicName.c_str(), RequestPublish, this->TypeIDHashVal);
+		this->BroadcastPort = NodeInnerMethods::RequestTopic(this->TopicName.c_str(), RequestSubscribe, this->TypeIDHashVal);
 		this->SubscribeSocketFD = socket(AF_INET, SOCK_DGRAM, 0);
 		if (this->SubscribeSocketFD == INVALID_SOCKET)
 		{

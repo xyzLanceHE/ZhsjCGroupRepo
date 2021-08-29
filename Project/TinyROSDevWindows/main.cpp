@@ -4,8 +4,10 @@
 #include <iostream>
 #include "TinyROS/TinyROS.h"
 
+
 int main()
 {
+
     TinyROS::Master::LoadConfig("MasterConfig.json");
     try
     {

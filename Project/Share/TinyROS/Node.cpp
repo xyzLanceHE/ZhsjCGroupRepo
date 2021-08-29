@@ -91,12 +91,12 @@ namespace TinyROS
         throw NodeInitializeFailedException("此方法尚未实现\n");
     }
 
-    void Node::HashTest()
+    void Node::Close()
     {
-        std::string msg("this is a node");
-        SHA256Value hashVal;
-        SHA256((unsigned char*)msg.c_str(), msg.size(), hashVal.value);
-        std::cout << "sha256 of the message:" << hashVal.ToHexString().c_str() << std::endl;
+        // TODO: 告知Master自己已经退出
+        Node::implData->ResetFlag = 0b11;
+        CloseSocket(Node::implData->MasterReceiverSocketFD);
+        CloseSocket(Node::implData->MasterTalkerSocketFD);
     }
 
     void Node::SetUpSocket()
@@ -466,7 +466,7 @@ namespace TinyROS
                 }
                 else if (signal == 1)
                 {
-                    std::cout << "Master signal running\n";
+                    // std::cout << "Master signal running\n";
                 }
             }
         }
@@ -550,6 +550,12 @@ namespace TinyROS
                 break;
             case UnregisteredNode:
                 throw TopicException("节点未注册，话题申请失败");
+                break;
+            case AlreadyPubToTopic:
+                throw TopicException("已经发布到该话题");
+                break;
+            case AlreadySubFromTopic:
+                throw TopicException("已经订阅了该话题");
                 break;
             default:
                 throw TopicException("未能申请到话题，未知的错误");

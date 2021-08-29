@@ -67,6 +67,16 @@ namespace TinyROS
 		this->pCallbackObject = nullptr;
 		this->ObjectCallback = nullptr;
 		this->UnrestrictedCallback = callback;
+		this->impl->SubscriberInterface = this;
+		try
+		{
+			this->impl->Init();
+		}
+		catch (TinyROSException& e)
+		{
+			delete this->impl;
+			throw e;
+		}
 	}
 
 	template<typename TMessage, typename TCallbackObject>
@@ -78,6 +88,7 @@ namespace TinyROS
 		this->pCallbackObject = executorObject;
 		this->ObjectCallback = callback;
 		this->UnrestrictedCallback = nullptr;
+		this->impl->SubscriberInterface = this;
 		try
 		{
 			this->impl->Init();

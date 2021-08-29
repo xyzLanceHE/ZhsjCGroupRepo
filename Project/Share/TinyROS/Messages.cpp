@@ -54,4 +54,41 @@ namespace TinyROS
 	}
 
 
+	TypeID StringMessage::GetTypeID()
+	{
+		TypeID id(typeid(StringMessage));
+		return id;
+	}
+
+	std::string StringMessage::Serialize()
+	{
+		return this->Value;
+	}
+
+	void StringMessage::Deserialize(std::string& str)
+	{
+		this->Value = str;
+	}
+
+	StringMessage::StringMessage()
+	{
+
+	}
+
+	StringMessage::StringMessage(std::string& str)
+	{
+		this->Value = str;
+	}
+
+
+	StringMessage::StringMessage(const char* str)
+	{
+		this->Value = str;
+	}
+
+	std::string StringMessage::GetValue()
+	{
+		return this->Value;
+	}
+
 }

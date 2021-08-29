@@ -598,8 +598,7 @@ namespace TinyROS
 		{
 			if (this->Topics[topicNameHash].Type == topicTypeHash)
 			{
-				port = this->NextTopicPort;
-				this->NextTopicPort++;
+				port = this->Topics[topicNameHash].Port;
 				msg[0] = RequestSuccess;
 				msg[1] = port;
 				msg[2] = port;
@@ -642,8 +641,9 @@ namespace TinyROS
 				}
 				else
 				{
-					msg[0] = RequestFail;
-					msg[1] = AlreadySubFromTopic;
+					// 暂时允许重复订阅，为了更加方便注册多个回调函数。
+					//msg[0] = RequestFail;
+					//msg[1] = AlreadySubFromTopic;
 				}
 				break;
 			default:

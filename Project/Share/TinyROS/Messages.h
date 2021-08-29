@@ -233,6 +233,22 @@ namespace TinyROS
 	}
 
 
+	class StringMessage : public Message
+	{
+	public:
+		virtual TypeID GetTypeID();
+		virtual std::string Serialize();
+		virtual void Deserialize(std::string& str);
+		virtual ~StringMessage() {}
+	public:
+		StringMessage();
+		StringMessage(std::string& str);
+		StringMessage(const char* str);
+		std::string GetValue();
+	private:
+		std::string Value;
+	};
+
 
 	// 使用Json进行编解码的消息
 	// 内部拟用JsonCpp实现

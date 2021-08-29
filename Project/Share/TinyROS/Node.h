@@ -12,7 +12,7 @@ namespace TinyROS
 	public:
 		static void Init(const char* name);
 		static void Init(const char* name, const char* configPath);
-		static void HashTest();
+		static void Close();
 	public:
 		static bool IsInitialized;
 	private:
