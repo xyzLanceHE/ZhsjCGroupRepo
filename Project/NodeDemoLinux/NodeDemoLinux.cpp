@@ -36,7 +36,7 @@ int main()
     try
     {
         // 一句话即可。参数是本节点的名字，在局域网中必须是唯一的
-        TinyROS::Node::Init("Hello world listen");
+        //TinyROS::Node::Init("Hello world listen");
     }
     catch (TinyROS::TinyROSException& e)
     {
@@ -47,20 +47,21 @@ int main()
     // Node初始化完成之后，可以定义Publisher和Subscriber
     // 本Demo演示Subscriber
     // Subscriber是一个模板类，模板参数为1至2个，第一个参数是消息的类型
-    TinyROS::Subscriber<TinyROS::StringMessage>* helloReceiver1;
+    //TinyROS::Subscriber<TinyROS::StringMessage>* helloReceiver1;
     // 第二个参数可选，如果回调函数是类的方法，则填类名
-    TinyROS::Subscriber<TinyROS::StringMessage, SampleClass>* helloReceiver2;
+    //TinyROS::Subscriber<TinyROS::StringMessage, SampleClass>* helloReceiver2;
     // 既然类的方法做回调函数，肯定有一个类的对象
     SampleClass sampleObj("Foo");
+    TinyROS::Publisher* p = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<int>>("ame");
     try
     {
         // 构造函数的第一个参数是话题名称。话题不存在时，会自动创建
         // 话题一旦创建，消息的类型是确定的，后续新的Subscriber/Publisher订阅或者发布到此话题，需要与之匹配，否则会抛异常
         // 普通回调函数， 第二个参数直接填函数名
-        helloReceiver1 = new TinyROS::Subscriber<TinyROS::StringMessage>("HelloWorldTopic", NormalCallback);
+       // helloReceiver1 = new TinyROS::Subscriber<TinyROS::StringMessage>("HelloWorldTopic", NormalCallback);
         // 类的方法做回调函数，按照如下格式填写: 第二个参数是对象的指针，第三个参数固定写法为 &类名::方法名
-        helloReceiver2 = new TinyROS::Subscriber<TinyROS::StringMessage, SampleClass>("HelloWorldTopic", &sampleObj, 
-            &SampleClass::CallbackInObject);
+       // helloReceiver2 = new TinyROS::Subscriber<TinyROS::StringMessage, SampleClass>("HelloWorldTopic", &sampleObj, 
+       //     &SampleClass::CallbackInObject);
         // ps. 类的静态方法做回调函数，和普通回调函数的写法一致
     }
     catch (TinyROS::TinyROSException& e)
