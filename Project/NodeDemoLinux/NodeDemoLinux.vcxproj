@@ -80,13 +80,23 @@
     <ClCompile Include="NodeDemoLinux.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\Share\OpenSSL\lib\Linux_x64\libcrypto_x64.a" />
+    <Library Include="..\Share\OpenSSL\lib\Linux_ARM\libcrypto_arm.a" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>TINYROS_ON_LINUX</PreprocessorDefinitions>
       <CppLanguageStandard>c++14</CppLanguageStandard>
       <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <ClCompile>
+      <PreprocessorDefinitions>TINYROS_ON_LINUX</PreprocessorDefinitions>
+      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
+      <CppLanguageStandard>c++14</CppLanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
