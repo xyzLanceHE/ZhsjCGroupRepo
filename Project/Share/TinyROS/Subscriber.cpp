@@ -9,122 +9,122 @@
 
 namespace TinyROS
 {
-	//class SubscriberImplement::SubscriberInnerNetwork
-	//{
-	//public:
-	//	SOCKET SubscribeSocketFD;
-	//	std::string TopicName;
-	//	TypeIDHash TypeIDHashVal;
-	//	std::string BroadcastIP;
-	//	TopicPort BroadcastPort;
-	//	std::string LocalIP;
-	//	~SubscriberInnerNetwork();
-	//private:
-	//	friend class SubscriberImplement;
-	//	SubscriberImplement* pOwner;
-	//	SubscriberInnerNetwork(const char* topicName, TypeIDHash typeIdHash);
-	//	void InnerInit();
-	//	void SubscribeThread();
-	//};
+	class Subscriber::SubscriberImplement
+	{
+	public:
+		SOCKET SubscribeSocketFD;
+		std::string TopicName;
+		TypeIDHash TypeIDHashVal;
+		std::string BroadcastIP;
+		TopicPort BroadcastPort;
+		std::string LocalIP;
+		MessageCallback* pCallback;
+	public:
+		~SubscriberImplement();
+		void Init();
+		void SubscribeThread();
+		void InvokeCallback(const char* buf, int len);
+	};
 
+	Subscriber::Subscriber(const char* topicName, TypeIDHash msgType, MessageCallback& callbacks)
+	{
+		this->impl = new SubscriberImplement();
+		this->impl->TopicName = topicName;
+		this->impl->TypeIDHashVal = msgType;
+		this->impl->pCallback = &callbacks;
+		try
+		{
+			this->impl->Init();
+		}
+		catch (TinyROSException& e)
+		{
+			delete this->impl;
+			throw e;
+		}
+	}
 
-	//SubscriberImplement::~SubscriberImplement()
-	//{
-	//	delete this->innerImpl;
-	//}
+	Subscriber::~Subscriber()
+	{
+		delete this->impl;
+	}
 
-	//SubscriberImplement::SubscriberImplement(const char* topicName, TypeIDHash typeIdHash)
-	//{
-	//	this->innerImpl = new SubscriberInnerNetwork(topicName, typeIdHash);
-	//	this->innerImpl->pOwner = this;
-	//}
+	void Subscriber::SubscriberImplement::SubscribeThread()
+	{
+		std::cout << "此Subscriber开始收听" << this->TopicName << std::endl;
+		while (true)
+		{
+			char* buf = new char[1024];
+			int len = recvfrom(this->SubscribeSocketFD, buf, 1024, 0,
+				nullptr, nullptr);
+			if (len == -1)
+			{
 
-	//void SubscriberImplement::Init()
-	//{
-	//	this->innerImpl->InnerInit();
-	//}
+			}
+			else
+			{
+				std::cout << "received " << len << " bytes\n";
+				std::thread handleThread(&SubscriberImplement::InvokeCallback, this, buf, len);
+				handleThread.detach();
+			}
+		}
+	}
 
-	//// buf是SubscribeThread的资源，由Invoke在完成复制之后删除
-	//void SubscriberImplement::OnRawMessageReceived(const char* buf, int len)
-	//{
-	//	this->SubscriberInterface->Invoke(buf, len);
-	//}
+	void Subscriber::SubscriberImplement::InvokeCallback(const char* buf, int len)
+	{
+		this->pCallback->InvokeAll(buf, len);
+		delete[] buf;
+	}
 
-	//SubscriberImplement::SubscriberInnerNetwork::SubscriberInnerNetwork(const char* topicName, TypeIDHash typeIdHash)
-	//{
-	//	this->TopicName = std::string(topicName);
-	//	this->TypeIDHashVal = typeIdHash;
-	//}
+	void Subscriber::SubscriberImplement::Init()
+	{
+		this->BroadcastPort = NodeInnerMethods::RequestTopic(this->TopicName.c_str(), RequestSubscribe, this->TypeIDHashVal);
+		this->SubscribeSocketFD = socket(AF_INET, SOCK_DGRAM, 0);
+		if (this->SubscribeSocketFD == INVALID_SOCKET)
+		{
+			throw CommunicateException("此Subscriber未能初始化Socket");
+		}
 
-	//SubscriberImplement::SubscriberInnerNetwork::~SubscriberInnerNetwork()
-	//{
-	//	CloseSocket(this->SubscribeSocketFD);
-	//}
+		int ret;
 
-	//void SubscriberImplement::SubscriberInnerNetwork::InnerInit()
-	//{
-	//	this->BroadcastPort = NodeInnerMethods::RequestTopic(this->TopicName.c_str(), RequestSubscribe, this->TypeIDHashVal);
-	//	this->SubscribeSocketFD = socket(AF_INET, SOCK_DGRAM, 0);
-	//	if (this->SubscribeSocketFD == INVALID_SOCKET)
-	//	{
-	//		throw CommunicateException("此Subscriber未能初始化Socket");
-	//	}
+		int reuseAddr = 1;
+		ret = setsockopt(this->SubscribeSocketFD, SOL_SOCKET, SO_REUSEADDR,
+			reinterpret_cast<char*>(&reuseAddr), sizeof(reuseAddr));
+		if (ret != 0)
+		{
+			throw CommunicateException("此Subscriber未能复用端口");
+		}
 
-	//	int ret;
+		sockaddr_in localBindAddr;
+		localBindAddr.sin_family = AF_INET;
+		localBindAddr.sin_port = htons(this->BroadcastPort);
+		localBindAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+		ret = bind(this->SubscribeSocketFD, reinterpret_cast<sockaddr*>(&localBindAddr),
+			sizeof(localBindAddr));
+		if (ret != 0)
+		{
+			throw CommunicateException("此Subscriber未能绑定端口");
+		}
 
-	//	int reuseAddr = 1;
-	//	ret = setsockopt(this->SubscribeSocketFD, SOL_SOCKET, SO_REUSEADDR,
-	//		reinterpret_cast<char*>(&reuseAddr), sizeof(reuseAddr));
-	//	if (ret != 0)
-	//	{
-	//		throw CommunicateException("此Subscriber未能复用端口");
-	//	}
+		this->LocalIP = NodeInnerMethods::GetLocalIP();
+		this->BroadcastIP = NodeInnerMethods::GetBroadcastIP();
+		ip_mreq multicastOption;
+		inet_pton(AF_INET, this->BroadcastIP.c_str(), &multicastOption.imr_multiaddr);
+		inet_pton(AF_INET, this->LocalIP.c_str(), &multicastOption.imr_interface);
+		ret = setsockopt(this->SubscribeSocketFD, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+			reinterpret_cast<char*>(&multicastOption), sizeof(multicastOption));
+		if (ret != 0)
+		{
+			throw CommunicateException("此Subscriber未能加入组播");
+		}
 
-	//	sockaddr_in localBindAddr;
-	//	localBindAddr.sin_family = AF_INET;
-	//	localBindAddr.sin_port = htons(this->BroadcastPort);
-	//	localBindAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	//	ret = bind(this->SubscribeSocketFD, reinterpret_cast<sockaddr*>(&localBindAddr),
-	//		sizeof(localBindAddr));
-	//	if (ret != 0)
-	//	{
-	//		throw CommunicateException("此Subscriber未能绑定端口");
-	//	}
-	//	
-	//	this->LocalIP = NodeInnerMethods::GetLocalIP();
-	//	this->BroadcastIP = NodeInnerMethods::GetBroadcastIP();
-	//	ip_mreq multicastOption;
-	//	inet_pton(AF_INET, this->BroadcastIP.c_str(), &multicastOption.imr_multiaddr);
-	//	inet_pton(AF_INET, this->LocalIP.c_str(), &multicastOption.imr_interface);
-	//	ret = setsockopt(this->SubscribeSocketFD, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-	//		reinterpret_cast<char*>(&multicastOption), sizeof(multicastOption));
-	//	if (ret != 0)
-	//	{
-	//		throw CommunicateException("此Subscriber未能加入组播");
-	//	}
+		std::thread subscribeThread(&SubscriberImplement::SubscribeThread, this);
+		subscribeThread.detach();
+	}
 
-	//	std::thread subscribeThread(&SubscriberInnerNetwork::SubscribeThread, this);
-	//	subscribeThread.detach();
-	//}
+	Subscriber::SubscriberImplement::~SubscriberImplement()
+	{
+		CloseSocket(this->SubscribeSocketFD);
+	}
 
-	//void SubscriberImplement::SubscriberInnerNetwork::SubscribeThread()
-	//{
-	//	std::cout << "此Subscriber开始收听" << this->TopicName << std::endl;
-	//	while (true)
-	//	{
-	//		char* buf = new char[1024];
-	//		int len = recvfrom(this->SubscribeSocketFD, buf, 1024, 0,
-	//			nullptr, nullptr);
-	//		if (len == -1)
-	//		{
-
-	//		}
-	//		else
-	//		{
-	//			std::thread handleThread(&SubscriberImplement::OnRawMessageReceived, this->pOwner, buf, len);
-	//			handleThread.detach();	
-	//		}
-	//	}
-	//}
 }
 

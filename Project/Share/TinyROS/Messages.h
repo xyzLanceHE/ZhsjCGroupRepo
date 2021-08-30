@@ -2,7 +2,7 @@
 #include "TinyROSPlatformDef.h"
 #include "TinyROSDef.h"
 #include "LibWrapper.h"
-
+#include "Exceptions.h"
 
 namespace TinyROS
 {
@@ -27,10 +27,6 @@ namespace TinyROS
 		virtual void Deserialize(std::string&) = 0;
 		virtual ~Message() {}
 	};
-
-	template<typename TValue, const char* TypeName>
-	class SimpleObjectMessageTest : public Message
-	{};
 
 
 	// 直接使用对象的内存进行序列化/反序列化，
@@ -285,4 +281,245 @@ namespace TinyROS
 		JsonMessageImplement* implData;
 	};
 
+
+	// 模仿了一下C#的多播委托，用于回调多个函数
+	// 存在不安全性，需要在应用层保证注册的函数类型与实际调用的类型匹配
+	class MulticastMessageDelegate
+	{
+	private:
+		class IMessageStringCallable
+		{
+		public:
+			virtual void Invoke(std::string& serializedMsg) = 0;
+			virtual bool Equals(IMessageStringCallable* other) = 0;
+			virtual ~IMessageStringCallable() {}
+		};
+
+		// 普通函数指针和静态成员函数
+		template<typename TMessage>
+		using NormalCallback = void (*)(TMessage);
+		template<typename TMessage>
+		class NormalMessageDelegate : public IMessageStringCallable
+		{
+		public:
+			NormalMessageDelegate(NormalCallback<TMessage> callback)
+			{
+				this->CallbackFunction = callback;
+			}
+			~NormalMessageDelegate() {} // 类的所有资源都不属于自己，不要delete，后面两个类同理
+		public:
+			virtual void Invoke(std::string& serializedMsg) override
+			{
+				TMessage msg;
+				msg.Deserialize(serializedMsg);
+				(*this->CallbackFunction)(msg);
+			}
+			virtual bool Equals(IMessageStringCallable* other) override
+			{
+				try
+				{
+					NormalMessageDelegate* pOther = dynamic_cast<NormalMessageDelegate*>(other);
+					return this->CallbackFunction == pOther->CallbackFunction;
+				}
+				catch (std::exception&)
+				{
+					return false;
+				}
+			}
+		private:
+			NormalCallback<TMessage> CallbackFunction;
+		};
+
+		// 对象成员函数
+		template<typename TMessage, typename TObject>
+		using ObjectMemberCallback = void (TObject::*)(TMessage);
+		template<typename TMessage, typename TObject>
+		class ObjectMemberMessageDelegate : public IMessageStringCallable
+		{
+		public:
+			ObjectMemberMessageDelegate(ObjectMemberCallback<TMessage, TObject> callback, TObject* obj)
+			{
+				this->Obj = obj;
+				this->MemberCallbackFunction = callback;
+			}
+			~ObjectMemberMessageDelegate() {}
+		public:
+			virtual void Invoke(std::string& serializedMsg) override
+			{
+				TMessage msg;
+				msg.Deserialize(serializedMsg);
+				(this->Obj->*MemberCallbackFunction)(msg);
+			}
+			virtual bool Equals(IMessageStringCallable* other) override
+			{
+				try
+				{
+					ObjectMemberMessageDelegate* pOther = dynamic_cast<ObjectMemberMessageDelegate*>(other);
+					return this->Obj == pOther->Obj;
+				}
+				catch (std::exception&)	// 实际上捕获的是std::bad_cast，但是需要引入<typeinfo>，所以直接捕获基类了
+				{
+					return false;
+				}
+			}
+		private:
+			TObject* Obj;
+			ObjectMemberCallback<TMessage, TObject> MemberCallbackFunction;
+		};
+
+		// 函数对象
+		template<typename TMessage, typename TObject>
+		class FunctionObjectMessageDelegate : public IMessageStringCallable
+		{
+		public:
+			FunctionObjectMessageDelegate(TObject& obj)
+			{
+				this->pObj = &obj;
+			}
+			~FunctionObjectMessageDelegate() {}
+		public:
+			virtual void Invoke(std::string& serializedMsg) override
+			{
+				TMessage msg;
+				msg.Deserialize(serializedMsg);
+				// this->pObj->operator()(typedMessage);
+				(*this->pObj)(msg);
+			}
+			virtual bool Equals(IMessageStringCallable* other) override
+			{
+				try
+				{
+					FunctionObjectMessageDelegate* pOther = dynamic_cast<FunctionObjectMessageDelegate*>(other);
+					return this->pObj == pOther->pObj;
+				}
+				catch (std::exception&)
+				{
+					return false;
+				}
+			}
+		private:
+			TObject* pObj;
+		};
+	public:
+		MulticastMessageDelegate(int maxCall = 3)
+		{
+			this->RegisteredCount = 0;
+			this->MaxCount = maxCall;
+			this->Delegates = new PointerIMessageCallable[maxCall]{ nullptr };
+		}
+		MulticastMessageDelegate(const MulticastMessageDelegate&) = delete;
+		MulticastMessageDelegate(MulticastMessageDelegate&&) = delete;
+		MulticastMessageDelegate& operator=(MulticastMessageDelegate&) = delete;
+		~MulticastMessageDelegate()
+		{
+			for (int i = 0; i < this->RegisteredCount; i++)
+			{
+				delete this->Delegates[i];
+			}
+		}
+
+		// 注册一个普通函数或者静态成员函数，TMessage是必选模板
+		template<typename TMessage>
+		void Register(NormalCallback<TMessage> funtion)
+		{
+			this->ThrowIfMax();
+			IMessageStringCallable* callback = new NormalMessageDelegate<TMessage>(funtion);
+			this->Delegates[this->RegisteredCount] = callback;
+			this->RegisteredCount++;
+		}
+
+		// 注册一个对象的成员函数，TMessage是必选模板，Tobject可以自动推导
+		template<typename TMessage, typename TObject>
+		void Register(ObjectMemberCallback<TMessage, TObject> memeberFunction, TObject& obj)
+		{
+			// 这个函数有两个参数，没法重载+=号，所以其他的也不重载了
+			this->ThrowIfMax();
+			IMessageStringCallable* callback = new ObjectMemberMessageDelegate<TMessage, TObject>(memeberFunction, &obj);
+			this->Delegates[this->RegisteredCount] = callback;
+			this->RegisteredCount++;
+		}
+
+		// 注册一个函数对象，TMessage是必选模板，Tobject可以自动推导
+		template<typename TMessage, typename TObject>
+		void Register(TObject& obj)
+		{
+			this->ThrowIfMax();
+			IMessageStringCallable* callback = new FunctionObjectMessageDelegate<TMessage, TObject>(obj);
+			this->Delegates[this->RegisteredCount] = callback;
+			this->RegisteredCount++;
+		}
+
+		// 取消注册一个普通函数或者静态成员函数
+		template<typename TMessage>
+		void Unregister(NormalCallback<TMessage> funtion)
+		{
+			IMessageStringCallable* callback = new NormalMessageDelegate<TMessage>(funtion);
+			this->FindAndRemove(callback);
+		}
+
+		// 取消注册一个对象的成员函数
+		template<typename TMessage, typename TObject>
+		void Unregister(ObjectMemberCallback<TMessage, TObject> memeberFunction, TObject& obj)
+		{
+			IMessageStringCallable* callback = new ObjectMemberMessageDelegate<TMessage, TObject>(memeberFunction, &obj);
+			this->FindAndRemove(callback);
+		}
+
+		// 取消注册一个函数对象
+		template<typename TMessage, typename TObject>
+		void Unregister(TObject& obj)
+		{
+			IMessageStringCallable* callback = new FunctionObjectMessageDelegate<TMessage, TObject>(obj);
+			this->FindAndRemove(callback);
+		}
+
+		void InvokeAll(const char* buf, int len)
+		{
+			std::string msgStr(buf, len);
+			for (int i = 0; i < this->RegisteredCount; i++)
+			{
+				this->Delegates[i]->Invoke(msgStr);
+			}
+		}
+	private:
+		using PointerIMessageCallable = IMessageStringCallable*;
+		PointerIMessageCallable* Delegates;
+		int RegisteredCount;
+		int MaxCount;
+
+	private:
+		inline void ThrowIfMax()
+		{
+			if (this->RegisteredCount == this->MaxCount)
+			{
+				throw CommunicateException("注册的回调函数达到上限");
+			}
+		}
+		inline void FindAndRemove(IMessageStringCallable* pMessageCallable)
+		{
+			int index = -1;
+			for (int i = 0; i < this->RegisteredCount; i++)
+			{
+				if (this->Delegates[i]->Equals(pMessageCallable))
+				{
+					delete this->Delegates[i];
+					this->Delegates[i] = nullptr;
+					delete pMessageCallable;
+					pMessageCallable = nullptr;
+					index = i;
+					break;
+				}
+			}
+			if (index != -1)
+			{
+				for (int i = index; i < this->RegisteredCount - 1; i++)
+				{
+					this->Delegates[i] = this->Delegates[i + 1];
+				}
+				this->RegisteredCount--;
+			}
+		}
+	};
+
+	using MessageCallback = MulticastMessageDelegate;
 }

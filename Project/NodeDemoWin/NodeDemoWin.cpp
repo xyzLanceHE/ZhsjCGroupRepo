@@ -12,6 +12,8 @@ void test()
     std::cout << sizeof(T);
 }
 
+
+
 int main()
 {
 
@@ -20,7 +22,7 @@ int main()
     try
     {
         // 一句话即可。参数是本节点的名字，在局域网中必须是唯一的
-        //TinyROS::Node::Init("Hello world talker");
+        TinyROS::Node::Init("Hello world talker");
     }
     catch (TinyROS::TinyROSException& e)
     {
@@ -30,11 +32,13 @@ int main()
 
     // Node初始化完成之后，可以定义Publisher和Subscriber
     // 本Demo演示Publisher
-    // Publisher是一个模板类，模板参数是消息的类型
+    // Publisher的构造函数被禁止调用，需要声明指针
     TinyROS::Publisher* helloer;
     try
     {
-        // 构造函数的参数是话题名称。话题不存在时，会自动创建
+        // 使用NewPublisher函数申请一个新的Publisher并得到指向它的指针
+        // 该函数有一个模板参数，是消息的类型
+        // 函数的参数是话题名称。话题不存在时，会自动创建
         // 话题一旦创建，消息的类型是确定的，后续新的Subscriber/Publisher订阅或者发布到此话题，需要与之匹配，否则会抛异常
         helloer = TinyROS::NewPublisher<TinyROS::StringMessage>("hello");
         
@@ -50,7 +54,7 @@ int main()
     std::string helloStr("Hello wrold");
     while (true)
     {
-        break;
+
         std::string msgStr = helloStr + std::to_string(num);
         TinyROS::StringMessage msg(msgStr);
         num++;

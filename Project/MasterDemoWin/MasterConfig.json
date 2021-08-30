@@ -1,7 +1,11 @@
 {
   "MulticastIP": "239.0.1.10",
   "MulticastPort": 6666,
+<<<<<<< HEAD
   "ListenIP": "192.168.0.112",
+=======
+  "ListenIP": "100.68.46.184",
+>>>>>>> 0192bf5e7afa706b3ea9f6e51623b248d5e4fa23
   "ListenPort": 6661,
   "MulticastLocalBindPort": 6660,
   "TopicStartPort": 6670

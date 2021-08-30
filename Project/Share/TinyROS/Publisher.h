@@ -3,7 +3,7 @@
 #include "TinyROSDef.h"
 #include "Exceptions.h"
 #include "Messages.h"
-#include <iostream>
+
 namespace TinyROS
 {
 
@@ -17,12 +17,12 @@ namespace TinyROS
 		Publisher(Publisher&&) = delete;
 		template<typename TMessage> friend Publisher* NewPublisher(const char* name);
 	public:
-		void Publish(Message& msg) {
-			
-			std::cout << msg.GetTypeID().ToHexString() << " of 1\n";
-			StringMessage m("a");
-			std::cout << m.GetTypeID().ToHexString() << " of 2\n";
-		}
+		~Publisher();
+		void Publish(Message& msg);
+	public:
+		class PublisherImplement;
+	private:
+		PublisherImplement* impl;
 	};
 
 	template<typename TMessage>
@@ -31,10 +31,8 @@ namespace TinyROS
 		// 甚至不需要type_traits, 如果不是Message及其子类, dynamic_cast在编译时就会报错
 		TMessage* pTemp = new TMessage();
 		Message* pMsg = dynamic_cast<Message*>(pTemp);
-		std::cout << pMsg->GetTypeID().ToHexString() << " of 1\n";
-		StringMessage m("a");
-		std::cout << m.GetTypeID().ToHexString() << " of 2\n";
-		return nullptr;
+		TypeIDHash msgType = pMsg->GetTypeID();
+		return new Publisher(name, msgType);
 	}
 
 
