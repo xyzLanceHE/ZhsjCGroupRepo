@@ -57,7 +57,6 @@ namespace TinyROS
 		pubThread.detach();
 	}
 
-
 	void Publisher::PublisherImplement::PublishThread(char* buf, int len)
 	{
 		this->PublishMutex.lock();
@@ -113,7 +112,6 @@ namespace TinyROS
 		this->addrCache.sin_port = htons(this->BroadcastPort);
 		inet_pton(AF_INET, this->BroadcastIP.c_str(), reinterpret_cast<char*>(&addrCache.sin_addr.s_addr));
 	}
-
 
 	Publisher::PublisherImplement::~PublisherImplement()
 	{

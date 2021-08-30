@@ -36,6 +36,6 @@ namespace TinyROS
 		static const char* GetBroadcastIP();
 		static const char* GetLocalIP();
 		friend class Publisher::PublisherImplement;
-		//friend class SubscriberImplement::SubscriberInnerNetwork;
+		friend class Subscriber::SubscriberImplement;
 	};
 }

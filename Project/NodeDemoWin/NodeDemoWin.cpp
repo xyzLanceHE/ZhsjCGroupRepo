@@ -12,6 +12,8 @@ void test()
     std::cout << sizeof(T);
 }
 
+
+
 int main()
 {
     std::cout << (typeid(TinyROS::StringMessage)).name() << std::endl << (typeid(TinyROS::StringMessage)).hash_code() << std::endl;

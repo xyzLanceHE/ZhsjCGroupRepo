@@ -3,7 +3,7 @@
 #include "TinyROSDef.h"
 #include "Exceptions.h"
 #include "Messages.h"
-#include <iostream>
+
 namespace TinyROS
 {
 
