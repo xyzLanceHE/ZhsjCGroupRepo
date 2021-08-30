@@ -2,7 +2,7 @@
 #include "TinyROSPlatformDef.h"
 #include "TinyROSDef.h"
 #include "LibWrapper.h"
-
+#include "Exceptions.h"
 
 namespace TinyROS
 {
@@ -314,7 +314,7 @@ namespace TinyROS
 				msg.Deserialize(serializedMsg);
 				(*this->CallbackFunction)(msg);
 			}
-			virtual bool Equals(IMessageStringCallable& other) override
+			virtual bool Equals(IMessageStringCallable* other) override
 			{
 				try
 				{
@@ -350,7 +350,7 @@ namespace TinyROS
 				msg.Deserialize(serializedMsg);
 				(this->Obj->*MemberCallbackFunction)(msg);
 			}
-			virtual bool Equals(IMessageStringCallable& other) override
+			virtual bool Equals(IMessageStringCallable* other) override
 			{
 				try
 				{
@@ -385,12 +385,12 @@ namespace TinyROS
 				// this->pObj->operator()(typedMessage);
 				(*this->pObj)(msg);
 			}
-			virtual bool Equals(IMessageStringCallable& other) override
+			virtual bool Equals(IMessageStringCallable* other) override
 			{
 				try
 				{
 					FunctionObjectMessageDelegate* pOther = dynamic_cast<FunctionObjectMessageDelegate*>(other);
-					return this->Obj == pOther->Obj;
+					return this->pObj == pOther->pObj;
 				}
 				catch (std::exception&)
 				{
@@ -425,6 +425,7 @@ namespace TinyROS
 			this->ThrowIfMax();
 			IMessageStringCallable* callback = new NormalMessageDelegate<TMessage>(funtion);
 			this->Delegates[this->RegisteredCount] = callback;
+			this->RegisteredCount++;
 		}
 
 		// 注册一个对象的成员函数，TMessage是必选模板，Tobject可以自动推导
@@ -435,6 +436,7 @@ namespace TinyROS
 			this->ThrowIfMax();
 			IMessageStringCallable* callback = new ObjectMemberMessageDelegate<TMessage, TObject>(memeberFunction, &obj);
 			this->Delegates[this->RegisteredCount] = callback;
+			this->RegisteredCount++;
 		}
 
 		// 注册一个函数对象，TMessage是必选模板，Tobject可以自动推导
@@ -444,6 +446,7 @@ namespace TinyROS
 			this->ThrowIfMax();
 			IMessageStringCallable* callback = new FunctionObjectMessageDelegate<TMessage, TObject>(obj);
 			this->Delegates[this->RegisteredCount] = callback;
+			this->RegisteredCount++;
 		}
 
 		// 取消注册一个普通函数或者静态成员函数
@@ -497,7 +500,7 @@ namespace TinyROS
 			int index = -1;
 			for (int i = 0; i < this->RegisteredCount; i++)
 			{
-				if (this->Delegates[i]->Equals(pMessageCallable));
+				if (this->Delegates[i]->Equals(pMessageCallable))
 				{
 					delete this->Delegates[i];
 					this->Delegates[i] = nullptr;

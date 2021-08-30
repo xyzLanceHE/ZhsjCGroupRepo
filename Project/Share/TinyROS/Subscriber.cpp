@@ -62,6 +62,7 @@ namespace TinyROS
 			}
 			else
 			{
+				std::cout << "received " << len << " bytes\n";
 				std::thread handleThread(&SubscriberImplement::InvokeCallback, this, buf, len);
 				handleThread.detach();
 			}
