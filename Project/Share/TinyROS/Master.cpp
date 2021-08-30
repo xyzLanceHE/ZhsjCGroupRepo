@@ -582,6 +582,7 @@ namespace TinyROS
 		{
 			if (createIfNo)
 			{
+				std::cout << "收到新的话题请求，分配端口:" << this->NextTopicPort << std::endl;
 				port = this->NextTopicPort;
 				this->NextTopicPort++;
 				TopicInformation info;
@@ -603,6 +604,7 @@ namespace TinyROS
 		{
 			if (this->Topics[topicNameHash].Type == topicTypeHash)
 			{
+				std::cout << "收到已有话题请求，端口:" << this->NextTopicPort << std::endl;
 				port = this->Topics[topicNameHash].Port;
 				msg[0] = RequestSuccess;
 				msg[1] = port;

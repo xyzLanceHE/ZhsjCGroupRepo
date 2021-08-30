@@ -14,7 +14,7 @@ void test()
 
 int main()
 {
-    std::cout << (typeid(TinyROS::StringMessage)).name() << std::endl << (typeid(TinyROS::StringMessage)).hash_code() << std::endl;
+
     // TinyROS的所有内容都位于TinyROS命名空间下，（不建议using命名空间，避免冲突）
     // 关于Node：此类用于将本进程初始化为TinyROS的节点，请在程序开始时使用
     try
