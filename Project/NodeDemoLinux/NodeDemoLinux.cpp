@@ -48,10 +48,6 @@ public:
 
 int main()
 {
-<<<<<<< HEAD
-=======
-
->>>>>>> 0192bf5e7afa706b3ea9f6e51623b248d5e4fa23
     // TinyROS的所有内容都位于TinyROS命名空间下，（不建议using命名空间，避免冲突）
     // 关于Node：此类用于将本进程初始化为TinyROS的节点，请在程序开始时使用
     try
@@ -67,14 +63,6 @@ int main()
 
     // Node初始化完成之后，可以定义Publisher和Subscriber
     // 本Demo演示Subscriber
-<<<<<<< HEAD
-    // Subscriber是一个模板类，模板参数为1至2个，第一个参数是消息的类型
-    TinyROS::Subscriber<TinyROS::StringMessage>* helloReceiver1;
-    // 第二个参数可选，如果回调函数是类的方法，则填类名
-    TinyROS::Subscriber<TinyROS::StringMessage, SampleClass>* helloReceiver2;
-    // 既然类的方法做回调函数，肯定有一个类的对象
-    SampleClass sampleObj("an object");
-=======
     // Subscriber的构造函数被禁止调用，需要声明指针
     TinyROS::Subscriber* helloReceiver;
     
@@ -95,7 +83,6 @@ int main()
     
     // 另外两种函数，放到新建Subscriber之后演示
 
->>>>>>> 0192bf5e7afa706b3ea9f6e51623b248d5e4fa23
     try
     {
         // 使用NewSubscriber函数申请一个新的Subscriber并得到指向它的指针
