@@ -9,7 +9,7 @@
 
 namespace TinyROS
 {
-	class PublisherImplement::PublisherInnerNetwork
+	class Publisher::PublisherImplement
 	{
 	public:
 		SOCKET PublishSocketFD;
@@ -19,57 +19,68 @@ namespace TinyROS
 		TopicPort BroadcastPort;
 		std::string LocalIP;
 		std::mutex PublishMutex;
-		~PublisherInnerNetwork();
-	private:
-		friend class PublisherImplement;
-		PublisherInnerNetwork(const char* topicName, TypeIDHash typdIdHash);
-		void InnerInit();
-		void PublishThread(char* buf, int len);
 		sockaddr_in addrCache;
+	public:
+		~PublisherImplement();
+		void PublishThread(char* buf, int len);
+		void Init();
 	};
 
-	PublisherImplement::~PublisherImplement()
+	Publisher::Publisher(const char* topicName, TypeIDHash msgType)
 	{
-		delete this->innerImpl;
+		this->impl = new PublisherImplement();
+		this->impl->TopicName = topicName;
+		this->impl->TypeIDHashVal = msgType;
+		try
+		{
+			this->impl->Init();
+		}
+		catch (TinyROSException& e)
+		{
+			delete this->impl;
+			throw e;
+		}
 	}
 
-
-	PublisherImplement::PublisherImplement(const char* topicName, TypeIDHash typdIdHash)
+	Publisher::~Publisher()
 	{
-		this->innerImpl = new PublisherInnerNetwork(topicName, typdIdHash);
+		delete this->impl;
 	}
 
-	void PublisherImplement::Init()
+	void Publisher::Publish(Message& msg)
 	{
-		this->innerImpl->InnerInit();
-	}
-
-	// buf是调用方的string的资源，由于socket另起线程，需要复制一份，防止资源被调用方回收
-	void PublisherImplement::InnerPublish(const char* buf, int len)
-	{
-		char* innerBuf = new char[len]; // 该buf由PublishThread回收
-		std::copy(buf, buf + len, innerBuf);
-		std::thread pubThread(&PublisherInnerNetwork::PublishThread, this->innerImpl, innerBuf, len);
+		std::string s = msg.Serialize();
+		int len = s.size();
+		char* buf = new char[len]; // 该buf由PublishThread回收
+		std::copy(s.begin(), s.end(), buf);
+		std::thread pubThread(&PublisherImplement::PublishThread, this->impl, buf, len);
 		pubThread.detach();
 	}
 
-	PublisherImplement::PublisherInnerNetwork::PublisherInnerNetwork(const char* topicName, TypeIDHash typdIdHash)
+	void Publisher::PublisherImplement::PublishThread(char* buf, int len)
 	{
-		this->TopicName = std::string(topicName);
-		this->TypeIDHashVal = typdIdHash;
+		this->PublishMutex.lock();
+
+		int sentLen = sendto(this->PublishSocketFD, buf, len, 0,
+			reinterpret_cast<sockaddr*>(&this->addrCache), sizeof(sockaddr_in));
+		if (sentLen == -1)
+		{
+
+		}
+		else
+		{
+			// std::cout << "sent " << len << " bytes\n";
+		}
+		this->PublishMutex.unlock();
+		delete[] buf;
 	}
 
-	PublisherImplement::PublisherInnerNetwork::~PublisherInnerNetwork()
-	{
-		CloseSocket(this->PublishSocketFD);
-	}
-
-	void PublisherImplement::PublisherInnerNetwork::InnerInit()
+	void Publisher::PublisherImplement::Init()
 	{
 		this->BroadcastIP = NodeInnerMethods::GetBroadcastIP();
 		this->BroadcastPort = NodeInnerMethods::RequestTopic(this->TopicName.c_str(), RequestPublish, this->TypeIDHashVal);
 		this->LocalIP = NodeInnerMethods::GetLocalIP();
-		
+
 		this->PublishSocketFD = socket(AF_INET, SOCK_DGRAM, 0);
 		if (this->PublishSocketFD == INVALID_SOCKET)
 		{
@@ -102,23 +113,8 @@ namespace TinyROS
 		inet_pton(AF_INET, this->BroadcastIP.c_str(), reinterpret_cast<char*>(&addrCache.sin_addr.s_addr));
 	}
 
-	void PublisherImplement::PublisherInnerNetwork::PublishThread(char* buf, int len)
+	Publisher::PublisherImplement::~PublisherImplement()
 	{
-		this->PublishMutex.lock();
-		
-		int sentLen = sendto(this->PublishSocketFD, buf, len, 0,
-			reinterpret_cast<sockaddr*>(&this->addrCache), sizeof(sockaddr_in));
-		if (sentLen == -1)
-		{
-
-		}
-		else
-		{
-
-		}
-
-		this->PublishMutex.unlock();
-		delete[] buf;
+		CloseSocket(this->PublishSocketFD);
 	}
-
 }

@@ -2,95 +2,37 @@
 #include "TinyROSPlatformDef.h"
 #include "TinyROSDef.h"
 #include "Exceptions.h"
+#include "Messages.h"
 
 namespace TinyROS
 {
-	
-	class PublisherImplement
-	{
-	public:
-		~PublisherImplement();
-		class PublisherInnerNetwork;
-	private:
-		void Init(); // 单独初始化，避免构造函数抛异常导致无法析构
-		void InnerPublish(const char* buf, int len);
-	private:
-		// 虽然这个类不是模板，但是放在Publisher内部的话，定义还是会带模板
-		// 为了把定义放到源文件里，暂且搞成这样，把类拉到Publisher外面，把构造函数声明为private，再把Publiser声明为friend，
-		// 最后还得再套一层内部类的壳，主要是不想引入socket、thread相关的头文件，不知道有没有更好的办法
-		PublisherImplement() = delete;
-		PublisherImplement(const char* topicName, TypeIDHash typdIdHash);
-		template<typename TMessage> friend class Publisher;
-		PublisherInnerNetwork* innerImpl;
-	};
-	
 
-	template<typename TMessage>
 	class Publisher
 	{
-	public:
-		Publisher(const char* topicName);
-		Publisher(const Publisher&) = delete;
-		Publisher& operator=(const Publisher&) = delete;
-		~Publisher();
-	public:
-		// 发布消息
-		// useRef指定是否使用msg的引用，区别不大
-		void Publish(TMessage& msg, bool useRef = true);
+	// 通过包装好的NewPublisher函数获取对象指针
 	private:
-		void PublishRef(TMessage& msg);
-		void PublishNoRef(TMessage msg);
+		Publisher(const char* topicName, TypeIDHash msgType);
+		Publisher() = delete;
+		Publisher(const Publisher&) = delete;
+		Publisher(Publisher&&) = delete;
+		template<typename TMessage> friend Publisher* NewPublisher(const char* name);
+	public:
+		~Publisher();
+		void Publish(Message& msg);
+	public:
+		class PublisherImplement;
+	private:
 		PublisherImplement* impl;
 	};
 
 	template<typename TMessage>
-	inline Publisher<TMessage>::Publisher(const char* topicName)
+	Publisher* NewPublisher(const char* name)
 	{
-		TMessage temp;
-		TypeIDHash typeIdHash = temp.GetTypeID();
-		this->impl = new PublisherImplement(topicName, typeIdHash);
-		try
-		{
-			this->impl->Init();
-		}
-		catch (TinyROSException& e)
-		{
-			delete this->impl;
-			throw e;
-		}
-	}
-
-	template<typename TMessage>
-	inline Publisher<TMessage>::~Publisher()
-	{
-		delete this->impl;
-	}
-
-	template<typename TMessage>
-	inline void Publisher<TMessage>::Publish(TMessage& msg, bool useRef)
-	{
-		if (useRef)
-		{
-			this->PublishRef(msg);
-		}
-		else
-		{
-			this->PublishNoRef(msg);
-		}
-	}
-
-	template<typename TMessage>
-	inline void Publisher<TMessage>::PublishRef(TMessage& msg)
-	{
-		std::string s = msg.Serialize();
-		this->impl->InnerPublish(s.c_str(), s.size());
-	}
-
-	template<typename TMessage>
-	inline void Publisher<TMessage>::PublishNoRef(TMessage msg)
-	{
-		std::string s = msg.Serialize();
-		this->impl->InnerPublish(s.c_str(), s.size());
+		// 甚至不需要type_traits, 如果不是Message及其子类, dynamic_cast在编译时就会报错
+		TMessage* pTemp = new TMessage();
+		Message* pMsg = dynamic_cast<Message*>(pTemp);
+		TypeIDHash msgType = pMsg->GetTypeID();
+		return new Publisher(name, msgType);
 	}
 
 

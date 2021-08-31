@@ -2,131 +2,36 @@
 #include "TinyROSPlatformDef.h"
 #include "TinyROSDef.h"
 #include "Exceptions.h"
+#include "Messages.h"
+
 
 namespace TinyROS
 {
-	class NoneType 
+	class Subscriber
 	{
-		// 仅用于填充Subscriber的默认模板（填void会导致编译问题）
-	};
-
-	class ISubscriberInvoker 
-	{
+	// 通过包装好的NewSubscriber函数获取对象指针
 	private:
-		// 用于回调Subscriber而不管模板参数
-		friend class SubscriberImplement;
-		virtual void Invoke(const char* buf, int len) = 0;
-	};
-
-	class SubscriberImplement
-	{
-	public:
-		~SubscriberImplement();
-		class SubscriberInnerNetwork;
-	private:
-		void Init();
-		void OnRawMessageReceived(const char* buf, int len);
-		ISubscriberInvoker* SubscriberInterface;
-	private:
-		// 这里写法与Publisher类似，详情见Publisher.h
-		SubscriberImplement() = delete;
-		SubscriberImplement(const char* topicName, TypeIDHash typeIdHash);
-		template<typename TMessage, typename TCallbackObject> friend class Subscriber;
-		SubscriberInnerNetwork* innerImpl;
-	};
-
-	template<typename TMessage, typename TCallbackObject = NoneType>
-	class Subscriber : private ISubscriberInvoker
-	{
-	public:
-		using MessageCallback = void (*)(TMessage);
-		using MessageCallbackInObject = void (TCallbackObject::*)(TMessage);
-	public:
-		Subscriber(const char* topicName, MessageCallback callback);
-		// 支持回调函数是对象的成员方法
-		Subscriber(const char* topicName, TCallbackObject* executorObject, MessageCallbackInObject callback);
+		Subscriber(const char* topicName, IMessageCallable* callbacks, Message* pTypedMessage);
+		Subscriber() = delete;
 		Subscriber(const Subscriber&) = delete;
-		Subscriber& operator=(const Subscriber&) = delete;
+		Subscriber(Subscriber&&) = delete;
+		template<typename TMessage> friend Subscriber* NewSubscriber(const char* name, MessageCallback<TMessage>& callbacks);
+	public:
 		~Subscriber();
-	private:		
-		MessageCallback UnrestrictedCallback;
-		MessageCallbackInObject ObjectCallback;
-		TCallbackObject* pCallbackObject;
-		void OnMessageReceived(TMessage message);
-		virtual void Invoke(const char* buf, int len);	// 通过 ISubscriberInvoker 继承
+	public:
+		class SubscriberImplement;
 	private:
 		SubscriberImplement* impl;
 	};
 
-	template<typename TMessage, typename TCallbackObject>
-	inline Subscriber<TMessage, TCallbackObject>::Subscriber(const char* topicName, MessageCallback callback)
+	template<typename TMessage>
+	Subscriber* NewSubscriber(const char* name, MessageCallback<TMessage>& callbacks)
 	{
-		TMessage temp;
-		TypeIDHash typeIdHash = temp.GetTypeID();
-		this->impl = new SubscriberImplement(topicName, typeIdHash);
-		this->pCallbackObject = nullptr;
-		this->ObjectCallback = nullptr;
-		this->UnrestrictedCallback = callback;
-		this->impl->SubscriberInterface = this;
-		try
-		{
-			this->impl->Init();
-		}
-		catch (TinyROSException& e)
-		{
-			delete this->impl;
-			throw e;
-		}
-	}
-
-	template<typename TMessage, typename TCallbackObject>
-	inline Subscriber<TMessage, TCallbackObject>::Subscriber(const char* topicName, TCallbackObject* executorObject, MessageCallbackInObject callback)
-	{
-		TMessage temp;
-		TypeIDHash typeIdHash = temp.GetTypeID();
-		this->impl = new SubscriberImplement(topicName, typeIdHash);
-		this->pCallbackObject = executorObject;
-		this->ObjectCallback = callback;
-		this->UnrestrictedCallback = nullptr;
-		this->impl->SubscriberInterface = this;
-		try
-		{
-			this->impl->Init();
-		}
-		catch (TinyROSException& e)
-		{
-			delete this->impl;
-			throw e;
-		}
-	}
-
-	template<typename TMessage, typename TCallbackObject>
-	inline Subscriber<TMessage, TCallbackObject>::~Subscriber()
-	{
-		delete this->impl;
-	}
-
-	template<typename TMessage, typename TCallbackObject>
-	inline void Subscriber<TMessage, TCallbackObject>::OnMessageReceived(TMessage msg)
-	{
-		if (this->pCallbackObject != nullptr)
-		{
-			(this->pCallbackObject->*(this->ObjectCallback))(msg);
-		}
-		else
-		{
-			(*this->UnrestrictedCallback)(msg);
-		}
-	}
-
-	template<typename TMessage, typename TCallbackObject>
-	inline void Subscriber<TMessage, TCallbackObject>::Invoke(const char* buf, int len) // 通过 ISubscriberInvoker 继承
-	{
-		std::string rawMsg(buf, len);
-		delete[] buf;
-		TMessage msg;
-		msg.Deserialize(rawMsg);
-		this->OnMessageReceived(msg);
+		TMessage* pTemp = new TMessage();
+		Message* pMsg = dynamic_cast<Message*>(pTemp);
+		IMessageCallable* pCallbacks = &callbacks;
+		return new Subscriber(name, pCallbacks, pMsg);
 	}
 
 }
+

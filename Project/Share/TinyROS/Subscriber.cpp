@@ -9,7 +9,7 @@
 
 namespace TinyROS
 {
-	class SubscriberImplement::SubscriberInnerNetwork
+	class Subscriber::SubscriberImplement
 	{
 	public:
 		SOCKET SubscribeSocketFD;
@@ -18,50 +18,71 @@ namespace TinyROS
 		std::string BroadcastIP;
 		TopicPort BroadcastPort;
 		std::string LocalIP;
-		~SubscriberInnerNetwork();
-	private:
-		friend class SubscriberImplement;
-		SubscriberImplement* pOwner;
-		SubscriberInnerNetwork(const char* topicName, TypeIDHash typeIdHash);
-		void InnerInit();
+		IMessageCallable* pCallback;
+		Message* pTypedMessage;
+	public:
+		~SubscriberImplement();
+		void Init();
 		void SubscribeThread();
+		void InvokeCallback(const char* buf, int len);
 	};
 
-
-	SubscriberImplement::~SubscriberImplement()
+	Subscriber::Subscriber(const char* topicName, IMessageCallable* callbacks, Message* pTypedMessage)
 	{
-		delete this->innerImpl;
+		this->impl = new SubscriberImplement();
+		this->impl->TopicName = topicName;
+		TypeIDHash hash = pTypedMessage->GetTypeID();
+		this->impl->TypeIDHashVal = hash;
+		this->impl->pCallback = callbacks;
+		this->impl->pTypedMessage = pTypedMessage;
+		try
+		{
+			this->impl->Init();
+		}
+		catch (TinyROSException& e)
+		{
+			delete this->impl;
+			throw e;
+		}
 	}
 
-	SubscriberImplement::SubscriberImplement(const char* topicName, TypeIDHash typeIdHash)
+	Subscriber::~Subscriber()
 	{
-		this->innerImpl = new SubscriberInnerNetwork(topicName, typeIdHash);
-		this->innerImpl->pOwner = this;
+		delete this->impl;
 	}
 
-	void SubscriberImplement::Init()
+	void Subscriber::SubscriberImplement::SubscribeThread()
 	{
-		this->innerImpl->InnerInit();
+		std::cout << "此Subscriber开始收听" << this->TopicName << std::endl;
+		while (true)
+		{
+			char* buf = new char[1024];
+			int len = recvfrom(this->SubscribeSocketFD, buf, 1024, 0,
+				nullptr, nullptr);
+			if (len == -1)
+			{
+
+			}
+			else
+			{
+				// std::cout << "received " << len << " bytes\n";
+				std::thread handleThread(&SubscriberImplement::InvokeCallback, this, buf, len);
+				handleThread.detach();
+			}
+		}
 	}
 
-	// buf是SubscribeThread的资源，由Invoke在完成复制之后删除
-	void SubscriberImplement::OnRawMessageReceived(const char* buf, int len)
+	void Subscriber::SubscriberImplement::InvokeCallback(const char* buf, int len)
 	{
-		this->SubscriberInterface->Invoke(buf, len);
+		std::string s(buf, len);
+		Message* pMsg = this->pTypedMessage->NewDeserialize(s);
+		Message& msg = *pMsg;
+		this->pCallback->Invoke(msg);
+		delete pMsg;
+		delete[] buf;
 	}
 
-	SubscriberImplement::SubscriberInnerNetwork::SubscriberInnerNetwork(const char* topicName, TypeIDHash typeIdHash)
-	{
-		this->TopicName = std::string(topicName);
-		this->TypeIDHashVal = typeIdHash;
-	}
-
-	SubscriberImplement::SubscriberInnerNetwork::~SubscriberInnerNetwork()
-	{
-		CloseSocket(this->SubscribeSocketFD);
-	}
-
-	void SubscriberImplement::SubscriberInnerNetwork::InnerInit()
+	void Subscriber::SubscriberImplement::Init()
 	{
 		this->BroadcastPort = NodeInnerMethods::RequestTopic(this->TopicName.c_str(), RequestSubscribe, this->TypeIDHashVal);
 		this->SubscribeSocketFD = socket(AF_INET, SOCK_DGRAM, 0);
@@ -90,7 +111,7 @@ namespace TinyROS
 		{
 			throw CommunicateException("此Subscriber未能绑定端口");
 		}
-		
+
 		this->LocalIP = NodeInnerMethods::GetLocalIP();
 		this->BroadcastIP = NodeInnerMethods::GetBroadcastIP();
 		ip_mreq multicastOption;
@@ -103,28 +124,14 @@ namespace TinyROS
 			throw CommunicateException("此Subscriber未能加入组播");
 		}
 
-		std::thread subscribeThread(&SubscriberInnerNetwork::SubscribeThread, this);
+		std::thread subscribeThread(&SubscriberImplement::SubscribeThread, this);
 		subscribeThread.detach();
 	}
 
-	void SubscriberImplement::SubscriberInnerNetwork::SubscribeThread()
+	Subscriber::SubscriberImplement::~SubscriberImplement()
 	{
-		std::cout << "此Subscriber开始收听" << this->TopicName << std::endl;
-		while (true)
-		{
-			char* buf = new char[1024];
-			int len = recvfrom(this->SubscribeSocketFD, buf, 1024, 0,
-				nullptr, nullptr);
-			if (len == -1)
-			{
-
-			}
-			else
-			{
-				std::thread handleThread(&SubscriberImplement::OnRawMessageReceived, this->pOwner, buf, len);
-				handleThread.detach();	
-			}
-		}
+		CloseSocket(this->SubscribeSocketFD);
 	}
+
 }
 

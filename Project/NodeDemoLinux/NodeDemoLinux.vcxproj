@@ -92,6 +92,16 @@
       <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <ClCompile>
+      <PreprocessorDefinitions>TINYROS_ON_LINUX</PreprocessorDefinitions>
+      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
+      <CppLanguageStandard>c++14</CppLanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

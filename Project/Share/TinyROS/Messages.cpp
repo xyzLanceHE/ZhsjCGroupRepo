@@ -5,6 +5,11 @@
 
 namespace TinyROS
 {
+	SHA256Value::SHA256Value()
+	{
+		memset(this->value, 0, sizeof(*this));
+	}
+
 	SHA256Value::SHA256Value(const SHA256Value& other)
 	{
 		memmove(this->value, other.value, sizeof(*this));
@@ -67,13 +72,11 @@ namespace TinyROS
 		return compareResult < 0;
 	}
 
-	
+	TypeIDHash StringMessage::TypeHash = GetSHA("StringMessage", sizeof("StringMessage"));
+
 	TypeIDHash StringMessage::GetTypeID()
 	{
-		SHA256Value sha;
-		const std::string name("StringMessage");
-		SetSHA256InPlace(name.c_str(), name.size(), &sha);
-		return sha;
+		return StringMessage::TypeHash;
 	}
 
 	std::string StringMessage::Serialize()
@@ -86,9 +89,15 @@ namespace TinyROS
 		this->Value = str;
 	}
 
+	Message* StringMessage::NewDeserialize(std::string& str)
+	{
+		StringMessage* pMsg = new StringMessage(str);
+		return pMsg;
+	}
+
 	StringMessage::StringMessage()
 	{
-
+		
 	}
 
 	StringMessage::StringMessage(std::string& str)
@@ -100,6 +109,11 @@ namespace TinyROS
 	StringMessage::StringMessage(const char* str)
 	{
 		this->Value = str;
+	}
+
+	StringMessage::StringMessage(const StringMessage& other)
+	{
+		this->Value = other.Value;
 	}
 
 	std::string StringMessage::GetValue()
