@@ -80,7 +80,7 @@
     <ClCompile Include="NodeDemoLinux.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\Share\OpenSSL\lib\Linux_ARM\libcrypto_arm.a" />
+    <Library Include="..\Share\OpenSSL\lib\Linux_x64\libcrypto_x64.a" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

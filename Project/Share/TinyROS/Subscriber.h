@@ -11,11 +11,11 @@ namespace TinyROS
 	{
 	// 通过包装好的NewSubscriber函数获取对象指针
 	private:
-		Subscriber(const char* topicName, TypeIDHash msgType, MessageCallback& callbacks);
+		Subscriber(const char* topicName, IMessageCallable* callbacks, Message* pTypedMessage);
 		Subscriber() = delete;
 		Subscriber(const Subscriber&) = delete;
 		Subscriber(Subscriber&&) = delete;
-		template<typename TMessage> friend Subscriber* NewSubscriber(const char* name, MessageCallback& callbacks);
+		template<typename TMessage> friend Subscriber* NewSubscriber(const char* name, MessageCallback<TMessage>& callbacks);
 	public:
 		~Subscriber();
 	public:
@@ -25,12 +25,12 @@ namespace TinyROS
 	};
 
 	template<typename TMessage>
-	Subscriber* NewSubscriber(const char* name, MessageCallback& callbacks)
+	Subscriber* NewSubscriber(const char* name, MessageCallback<TMessage>& callbacks)
 	{
 		TMessage* pTemp = new TMessage();
 		Message* pMsg = dynamic_cast<Message*>(pTemp);
-		TypeIDHash msgType = pMsg->GetTypeID();
-		return new Subscriber(name, msgType, callbacks);
+		IMessageCallable* pCallbacks = &callbacks;
+		return new Subscriber(name, pCallbacks, pMsg);
 	}
 
 }

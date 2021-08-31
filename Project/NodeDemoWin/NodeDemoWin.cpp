@@ -6,14 +6,6 @@
 #include "TinyROS/TinyROS.h"
 #include <thread>
 
-template <class T>
-void test()
-{
-    std::cout << sizeof(T);
-}
-
-
-
 int main()
 {
 

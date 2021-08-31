@@ -69,18 +69,17 @@ int main()
     
     // 在新建一个Subscriber之前，需要新建一个MessageCallback类的对象
     // 请确保此对象的生命期不小于Subscriber
+    // MessageCallback有一个模板参数，为消息的类型
     // MessageCallback的构造函数有一个参数，是最大能注册的回调函数个数，默认为3，根据需要填写即可
-    TinyROS::MessageCallback callback(5);
+    TinyROS::MessageCallback<TinyROS::StringMessage> callback(5);
 
     // callback对象具有注册、取消注册两种方法，可以在任何时候使用，不论是在新建Subscriber之前还是之后
-    // 但是，不论是注册还是取消注册，不论注册哪种函数，都需要一个模板参数，填的是消息的类型
-    // 请确保同一个callback注册的所有消息类型都相同，并且与Subscriber也是同一个，否则会出错
 
     // 注册一个普通函数：
-    callback.Register<TinyROS::StringMessage>(NormalCallback);
+    callback.Register(NormalCallback);
 
     // 注册一个类的静态成员函数，与注册普通函数类似
-    callback.Register<TinyROS::StringMessage>(SampleClass::StaticMemberFuntion);
+    callback.Register(SampleClass::StaticMemberFuntion);
     
     // 另外两种函数，放到新建Subscriber之后演示
 
@@ -89,7 +88,7 @@ int main()
         // 使用NewSubscriber函数申请一个新的Subscriber并得到指向它的指针
         // 该函数有一个模板参数，是消息的类型
         // 该函数有两个参数，第一个是话题名称。话题不存在时，会自动创建
-        // 第二个参数是回调函数对象，请再次注意消息类型的匹配
+        // 第二个参数是MessageCallback的对象，它与此Subscriber的模板参数应相同
         helloReceiver = TinyROS::NewSubscriber<TinyROS::StringMessage>("hello", callback);
 
 
@@ -105,14 +104,14 @@ int main()
     // 对象的成员方法做回调函数，首先得有一个类的对象
     SampleClass sampleObj("Noelle");
     // 注意写法 ，第一个参数写法是固定的，为 &类名::函数名 ，第二个参数是要回调的对象
-    callback.Register<TinyROS::StringMessage>(&SampleClass::CallbackInObject, sampleObj);
+    callback.Register(&SampleClass::CallbackInObject, sampleObj);
     // 请确保此对象的生命期不小于callback，或者在对象被销毁之前，及时调用Unregister方法
     
     // 注册一个函数对象：
     // 首先新建一个函数对象：
     SampleFunctionalObjectClass sampleFunctionalObj("Barbara");
     // 写法与普通函数类似
-    callback.Register<TinyROS::StringMessage>(sampleFunctionalObj);
+    callback.Register(sampleFunctionalObj);
     // 同样，请确保此对象的生命期不小于callback
     
     // Subscriber一旦创建便持续生效，但是并不会阻塞，需要自己保持程序运行，否则程序就退出了

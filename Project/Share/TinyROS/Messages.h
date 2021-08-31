@@ -4,6 +4,13 @@
 #include "LibWrapper.h"
 #include "Exceptions.h"
 
+//#define ENABLE_PARALLEL_CALLBACK
+#ifdef ENABLE_PARALLEL_CALLBACK
+#include <thread>
+#endif // ENABLE_PARALLEL_CALLBACK
+
+
+
 namespace TinyROS
 {
 	
@@ -24,7 +31,10 @@ namespace TinyROS
 	public:
 		virtual TypeIDHash GetTypeID() = 0;
 		virtual std::string Serialize() = 0;
+		// 原位反序列化
 		virtual void Deserialize(std::string&) = 0;
+		// 在新的对象中序列化并返回，该对象由调用方回收
+		virtual Message* NewDeserialize(std::string&) = 0;
 		virtual ~Message() {}
 	};
 
@@ -36,26 +46,27 @@ namespace TinyROS
 	class SimpleObjectMessage : public Message
 	{
 	public:
-		virtual TypeIDHash GetTypeID();
-		virtual std::string Serialize();
-		virtual void Deserialize(std::string& str);
+		virtual TypeIDHash GetTypeID() override;
+		virtual std::string Serialize() override;
+		virtual void Deserialize(std::string& str) override;
+		virtual Message* NewDeserialize(std::string& str) override;
 		virtual ~SimpleObjectMessage() {}
 	public:
 		SimpleObjectMessage();
 		SimpleObjectMessage(TValue value);
-		TValue value;
+		TValue Value;
+	private:
+		static TypeIDHash TypeHash;
 	};
 
-	// 模板类必须把定义和声明放在一起，不然gcc编译不过
+	template<typename TValue>
+	TypeIDHash SimpleObjectMessage<TValue>::TypeHash = GetSHA("SimpleObjectMessage", sizeof("SimpleObjectMessage"));
 	
 	template<typename TValue>
 	inline TypeIDHash SimpleObjectMessage<TValue>::GetTypeID()
 	{
-		SHA256Value sha;
 		// 暂时不能区分不同的模板实例
-		const std::string name("SimpleObjectMessage");
-		SetSHA256InPlace(name.c_str(), name.size(), &sha);
-		return sha;
+		return SimpleObjectMessage::TypeHash;
 	}
 
 	template<typename TValue>
@@ -63,7 +74,7 @@ namespace TinyROS
 	{
 		constexpr int len = sizeof(TValue);
 		char buf[len];
-		char* pValue = reinterpret_cast<char*>(&this->value);
+		char* pValue = reinterpret_cast<char*>(&this->Value);
 		std::copy(pValue, pValue + len, buf);
 		return std::string(buf, len);
 	}
@@ -72,22 +83,31 @@ namespace TinyROS
 	inline void SimpleObjectMessage<TValue>::Deserialize(std::string& str)
 	{
 		constexpr int len = sizeof(TValue);
-		char* pValue = reinterpret_cast<char*>(&this->value);
+		char* pValue = reinterpret_cast<char*>(&this->Value);
 		const char* buf = str.c_str();
 		std::copy(buf, buf + len, pValue);
 	}
 
 	template<typename TValue>
+	inline Message* SimpleObjectMessage<TValue>::NewDeserialize(std::string& str)
+	{
+		SimpleObjectMessage* pMsg = new SimpleObjectMessage();
+		pMsg->Deserialize(str);
+		return pMsg;
+	}
+
+	template<typename TValue>
 	inline SimpleObjectMessage<TValue>::SimpleObjectMessage()
 	{
-		this->value = TValue();
+		this->Value = TValue();
 	}
 
 	template<typename TValue>
 	inline SimpleObjectMessage<TValue>::SimpleObjectMessage(TValue value)
 	{
-		this->value = value;
+		this->Value = value;
 	}
+
 
 
 	// 提供对简单类型的对象数组的支持
@@ -98,9 +118,10 @@ namespace TinyROS
 	class SimpleObjectArrayMessage : public Message
 	{
 	public:
-		virtual TypeIDHash GetTypeID();
-		virtual std::string Serialize();
-		virtual void Deserialize(std::string& str);
+		virtual TypeIDHash GetTypeID() override;
+		virtual std::string Serialize() override;
+		virtual void Deserialize(std::string& str) override;
+		virtual Message* NewDeserialize(std::string& str) override;
 		virtual ~SimpleObjectArrayMessage();
 	public:
 		SimpleObjectArrayMessage();
@@ -117,16 +138,19 @@ namespace TinyROS
 	private:
 		TValue* pValue;
 		int count;
+	private:
+		static TypeIDHash TypeHash;
 	};
+
+	template<typename TValue>
+	TypeIDHash SimpleObjectArrayMessage<TValue>::TypeHash = GetSHA("SimpleObjectArrayMessage", sizeof("SimpleObjectArrayMessage"));
 
 	template<typename TValue>
 	inline TypeIDHash SimpleObjectArrayMessage<TValue>::GetTypeID()
 	{
-		SHA256Value sha;
+
 		// 暂时不能区分不同的模板实例
-		const std::string name("SimpleObjecArraytMessage");
-		SetSHA256InPlace(name.c_str(), name.size(), &sha);
-		return sha;
+		return SimpleObjectArrayMessage::TypeHash;
 	}
 
 	template<typename TValue>
@@ -157,6 +181,14 @@ namespace TinyROS
 		this->count = count;
 		char* p = reinterpret_cast<char*>(this->pValue);
 		std::copy(str.c_str(), str.c_str() + sizeof(TValue) * count, p);
+	}
+
+	template<typename TValue>
+	inline Message* SimpleObjectArrayMessage<TValue>::NewDeserialize(std::string& str)
+	{
+		SimpleObjectArrayMessage* pMsg = new SimpleObjectArrayMessage();
+		pMsg->Deserialize(str);
+		return pMsg;
 	}
 
 	template<typename TValue>
@@ -243,78 +275,61 @@ namespace TinyROS
 	class StringMessage : public Message
 	{
 	public:
-		virtual TypeIDHash GetTypeID();
-		virtual std::string Serialize();
-		virtual void Deserialize(std::string& str);
+		virtual TypeIDHash GetTypeID() override;
+		virtual std::string Serialize() override;
+		virtual void Deserialize(std::string& str) override;
+		virtual Message* NewDeserialize(std::string& str) override;
 		virtual ~StringMessage() {}
 	public:
 		StringMessage();
 		StringMessage(std::string& str);
 		StringMessage(const char* str);
+		StringMessage(const StringMessage& other);
 		std::string GetValue();
 	private:
 		std::string Value;
+	private:
+		static TypeIDHash TypeHash;
 	};
 
+	enum class InvokeType { Sequential, Parallel };
 
-	// 使用Json进行编解码的消息
-	// 内部拟用JsonCpp实现
-	// 不能解决嵌套，除非调用也引入JsonCpp库，并且指定模板参数为Json::Value
-	// 感觉没啥用，懒得实现了
-	// 也不能解决TypeID的问题，存在隐患
-	class JsonMessage : public Message
+	class IMessageCallable
 	{
 	public:
-		virtual TypeIDHash GetTypeID();
-		virtual std::string Serialize();
-		virtual void Deserialize(std::string& str);
-		virtual ~JsonMessage();
-	public:
-		template<typename T> T GetValueByName(std::string& name);
-		template<typename T> T GetValueByName(const char* name);
-		template<typename T> T SetValueByName(std::string& name, T value);
-		template<typename T> T SetValueByName(const char*, T value);
-		template<typename T> T& operator[] (std::string& name);
-		template<typename T> T& operator[] (const char* name);
-	private:
-		class JsonMessageImplement;
-		JsonMessageImplement* implData;
+	    virtual	void Invoke(Message& msg) = 0;
+		virtual void SetInvokeType(InvokeType ivType) = 0;
 	};
 
-
-	// 模仿了一下C#的多播委托，用于回调多个函数
-	// 存在不安全性，需要在应用层保证注册的函数类型与实际调用的类型匹配
-	class MulticastMessageDelegate
+	// 模仿了一下C#的多播委托，可以回调多个函数
+	// 改进版，模板拉到了类上面，能够做到保证与Subscriber匹配，Register/Unregister也不再需要填模板参数
+	template<typename TMessage>
+	class MulticastMessageDelegate : public IMessageCallable
 	{
-	private:
-		class IMessageStringCallable
+		private:
+		class ITMessageCallable
 		{
 		public:
-			virtual void Invoke(std::string& serializedMsg) = 0;
-			virtual bool Equals(IMessageStringCallable* other) = 0;
-			virtual ~IMessageStringCallable() {}
+			virtual void Invoke(TMessage msg) = 0;
+			virtual bool Equals(ITMessageCallable* other) = 0;
+			virtual ~ITMessageCallable() {}
 		};
 
-		// 普通函数指针和静态成员函数
-		template<typename TMessage>
 		using NormalCallback = void (*)(TMessage);
-		template<typename TMessage>
-		class NormalMessageDelegate : public IMessageStringCallable
+		class NormalMessageDelegate : public ITMessageCallable
 		{
 		public:
-			NormalMessageDelegate(NormalCallback<TMessage> callback)
+			NormalMessageDelegate(NormalCallback callback)
 			{
 				this->CallbackFunction = callback;
 			}
 			~NormalMessageDelegate() {} // 类的所有资源都不属于自己，不要delete，后面两个类同理
 		public:
-			virtual void Invoke(std::string& serializedMsg) override
+			virtual void Invoke(TMessage msg) override
 			{
-				TMessage msg;
-				msg.Deserialize(serializedMsg);
 				(*this->CallbackFunction)(msg);
 			}
-			virtual bool Equals(IMessageStringCallable* other) override
+			virtual bool Equals(ITMessageCallable* other) override
 			{
 				try
 				{
@@ -327,30 +342,28 @@ namespace TinyROS
 				}
 			}
 		private:
-			NormalCallback<TMessage> CallbackFunction;
+			NormalCallback CallbackFunction;
 		};
 
-		// 对象成员函数
-		template<typename TMessage, typename TObject>
+		// 对象的成员函数
+		template<typename TObject>
 		using ObjectMemberCallback = void (TObject::*)(TMessage);
-		template<typename TMessage, typename TObject>
-		class ObjectMemberMessageDelegate : public IMessageStringCallable
+		template<typename TObject>
+		class ObjectMemberMessageDelegate : public ITMessageCallable
 		{
 		public:
-			ObjectMemberMessageDelegate(ObjectMemberCallback<TMessage, TObject> callback, TObject* obj)
+			ObjectMemberMessageDelegate(ObjectMemberCallback<TObject> callback, TObject* obj)
 			{
 				this->Obj = obj;
 				this->MemberCallbackFunction = callback;
 			}
 			~ObjectMemberMessageDelegate() {}
 		public:
-			virtual void Invoke(std::string& serializedMsg) override
+			virtual void Invoke(TMessage msg) override
 			{
-				TMessage msg;
-				msg.Deserialize(serializedMsg);
 				(this->Obj->*MemberCallbackFunction)(msg);
 			}
-			virtual bool Equals(IMessageStringCallable* other) override
+			virtual bool Equals(ITMessageCallable* other) override
 			{
 				try
 				{
@@ -364,12 +377,12 @@ namespace TinyROS
 			}
 		private:
 			TObject* Obj;
-			ObjectMemberCallback<TMessage, TObject> MemberCallbackFunction;
+			ObjectMemberCallback<TObject> MemberCallbackFunction;
 		};
 
 		// 函数对象
-		template<typename TMessage, typename TObject>
-		class FunctionObjectMessageDelegate : public IMessageStringCallable
+		template<typename TObject>
+		class FunctionObjectMessageDelegate : public ITMessageCallable
 		{
 		public:
 			FunctionObjectMessageDelegate(TObject& obj)
@@ -378,14 +391,12 @@ namespace TinyROS
 			}
 			~FunctionObjectMessageDelegate() {}
 		public:
-			virtual void Invoke(std::string& serializedMsg) override
+			virtual void Invoke(TMessage msg) override
 			{
-				TMessage msg;
-				msg.Deserialize(serializedMsg);
 				// this->pObj->operator()(typedMessage);
 				(*this->pObj)(msg);
 			}
-			virtual bool Equals(IMessageStringCallable* other) override
+			virtual bool Equals(ITMessageCallable* other) override
 			{
 				try
 				{
@@ -400,12 +411,13 @@ namespace TinyROS
 		private:
 			TObject* pObj;
 		};
+
 	public:
 		MulticastMessageDelegate(int maxCall = 3)
 		{
 			this->RegisteredCount = 0;
 			this->MaxCount = maxCall;
-			this->Delegates = new PointerIMessageCallable[maxCall]{ nullptr };
+			this->Delegates = new PointerITMessageCallable[maxCall]{ nullptr };
 		}
 		MulticastMessageDelegate(const MulticastMessageDelegate&) = delete;
 		MulticastMessageDelegate(MulticastMessageDelegate&&) = delete;
@@ -418,74 +430,77 @@ namespace TinyROS
 			}
 		}
 
-		// 注册一个普通函数或者静态成员函数，TMessage是必选模板
-		template<typename TMessage>
-		void Register(NormalCallback<TMessage> funtion)
+		// 注册一个普通函数或者静态成员函数
+		void Register(NormalCallback funtion)
 		{
 			this->ThrowIfMax();
-			IMessageStringCallable* callback = new NormalMessageDelegate<TMessage>(funtion);
+			ITMessageCallable* callback = new NormalMessageDelegate(funtion);
 			this->Delegates[this->RegisteredCount] = callback;
 			this->RegisteredCount++;
 		}
 
-		// 注册一个对象的成员函数，TMessage是必选模板，Tobject可以自动推导
-		template<typename TMessage, typename TObject>
-		void Register(ObjectMemberCallback<TMessage, TObject> memeberFunction, TObject& obj)
+		// 注册一个对象的成员函数,Tobject可以自动推导
+		template<typename TObject>
+		void Register(ObjectMemberCallback<TObject> memeberFunction, TObject& obj)
 		{
 			// 这个函数有两个参数，没法重载+=号，所以其他的也不重载了
 			this->ThrowIfMax();
-			IMessageStringCallable* callback = new ObjectMemberMessageDelegate<TMessage, TObject>(memeberFunction, &obj);
+			ITMessageCallable* callback = new ObjectMemberMessageDelegate<TObject>(memeberFunction, &obj);
 			this->Delegates[this->RegisteredCount] = callback;
 			this->RegisteredCount++;
 		}
 
-		// 注册一个函数对象，TMessage是必选模板，Tobject可以自动推导
-		template<typename TMessage, typename TObject>
+		// 注册一个函数对象,Tobject可以自动推导
+		template<typename TObject>
 		void Register(TObject& obj)
 		{
 			this->ThrowIfMax();
-			IMessageStringCallable* callback = new FunctionObjectMessageDelegate<TMessage, TObject>(obj);
+			ITMessageCallable* callback = new FunctionObjectMessageDelegate<TObject>(obj);
 			this->Delegates[this->RegisteredCount] = callback;
 			this->RegisteredCount++;
 		}
 
 		// 取消注册一个普通函数或者静态成员函数
-		template<typename TMessage>
-		void Unregister(NormalCallback<TMessage> funtion)
+		void Unregister(NormalCallback funtion)
 		{
-			IMessageStringCallable* callback = new NormalMessageDelegate<TMessage>(funtion);
+			ITMessageCallable* callback = new NormalMessageDelegate(funtion);
 			this->FindAndRemove(callback);
 		}
 
 		// 取消注册一个对象的成员函数
-		template<typename TMessage, typename TObject>
-		void Unregister(ObjectMemberCallback<TMessage, TObject> memeberFunction, TObject& obj)
+		template<typename TObject>
+		void Unregister(ObjectMemberCallback<TObject> memeberFunction, TObject& obj)
 		{
-			IMessageStringCallable* callback = new ObjectMemberMessageDelegate<TMessage, TObject>(memeberFunction, &obj);
+			ITMessageCallable* callback = new ObjectMemberMessageDelegate<TObject>(memeberFunction, &obj);
 			this->FindAndRemove(callback);
 		}
 
 		// 取消注册一个函数对象
-		template<typename TMessage, typename TObject>
+		template<typename TObject>
 		void Unregister(TObject& obj)
 		{
-			IMessageStringCallable* callback = new FunctionObjectMessageDelegate<TMessage, TObject>(obj);
+			ITMessageCallable* callback = new FunctionObjectMessageDelegate<TObject>(obj);
 			this->FindAndRemove(callback);
 		}
 
-		void InvokeAll(const char* buf, int len)
+		virtual void Invoke(Message& msg) override
 		{
-			std::string msgStr(buf, len);
-			for (int i = 0; i < this->RegisteredCount; i++)
-			{
-				this->Delegates[i]->Invoke(msgStr);
-			}
+			TMessage& typdMessage = *dynamic_cast<TMessage*>(&msg);
+			TMessage msgCopy(typdMessage);
+			this->InvokeAll(msgCopy);
 		}
+
+		void SetInvokeType(InvokeType type) override
+		{
+			this->invokeType = type;
+		}
+
 	private:
-		using PointerIMessageCallable = IMessageStringCallable*;
-		PointerIMessageCallable* Delegates;
+		using PointerITMessageCallable = ITMessageCallable*;
+		PointerITMessageCallable* Delegates;
 		int RegisteredCount;
 		int MaxCount;
+		InvokeType invokeType = InvokeType::Sequential;
 
 	private:
 		inline void ThrowIfMax()
@@ -495,7 +510,7 @@ namespace TinyROS
 				throw CommunicateException("注册的回调函数达到上限");
 			}
 		}
-		inline void FindAndRemove(IMessageStringCallable* pMessageCallable)
+		inline void FindAndRemove(ITMessageCallable* pMessageCallable)
 		{
 			int index = -1;
 			for (int i = 0; i < this->RegisteredCount; i++)
@@ -519,7 +534,62 @@ namespace TinyROS
 				this->RegisteredCount--;
 			}
 		}
+
+		void InvokeAll(TMessage& msg)
+		{
+			if (this->invokeType == InvokeType::Sequential)
+			{
+				for (int i = 0; i < this->RegisteredCount; i++)
+				{
+					this->InvokeAt(i, msg);
+				}
+			}
+			else if (this->invokeType == InvokeType::Parallel)
+			{
+#ifdef ENABLE_PARALLEL_CALLBACK
+				// 稳定性未知
+				std::thread** callbackThreads = new std::thread*[this->RegisteredCount];
+				for (int i = 0; i < this->RegisteredCount; i++)
+				{
+					std::thread callbackThread(&MulticastMessageDelegate::InvokeAt, this, i, msg);
+					callbackThreads[i] = &callbackThread;
+				}
+				for (int i = 0; i < this->RegisteredCount; i++)
+				{
+					if (callbackThreads[i]->joinable())
+					{
+						callbackThreads[i]->join();
+					}
+				}
+#else
+				// throw CommunicateException("未启用并行回调");
+				for (int i = 0; i < this->RegisteredCount; i++)
+				{
+					this->Delegates[i]->Invoke(msg);
+				}
+#endif 
+			}
+		}
+
+		void InvokeAt(int index, TMessage& msg)
+		{
+			this->Delegates[index]->Invoke(msg);
+		}
+
+	private:
+		void TypeTrial()
+		{
+			// 这个函数不被使用，但是可以保证如下性质成立：
+			// TMessage是Message的子类，
+			// TMessage有无参构造函数
+			// TMessage有拷贝构造函数
+			// 否则会过不了编译
+			TMessage* pTMsg = new TMessage();
+			Message* pMsg = dynamic_cast<Message*>(pTMsg);
+			TMessage tMsg(*pTMsg);
+		}
 	};
 
-	using MessageCallback = MulticastMessageDelegate;
+	template<typename TMessage>
+	using MessageCallback = MulticastMessageDelegate<TMessage>;
 }

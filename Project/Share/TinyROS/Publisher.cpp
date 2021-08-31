@@ -69,7 +69,7 @@ namespace TinyROS
 		}
 		else
 		{
-			std::cout << "sent " << len << " bytes\n";
+			// std::cout << "sent " << len << " bytes\n";
 		}
 		this->PublishMutex.unlock();
 		delete[] buf;

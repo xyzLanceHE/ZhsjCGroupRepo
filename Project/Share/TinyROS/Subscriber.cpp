@@ -18,7 +18,8 @@ namespace TinyROS
 		std::string BroadcastIP;
 		TopicPort BroadcastPort;
 		std::string LocalIP;
-		MessageCallback* pCallback;
+		IMessageCallable* pCallback;
+		Message* pTypedMessage;
 	public:
 		~SubscriberImplement();
 		void Init();
@@ -26,12 +27,14 @@ namespace TinyROS
 		void InvokeCallback(const char* buf, int len);
 	};
 
-	Subscriber::Subscriber(const char* topicName, TypeIDHash msgType, MessageCallback& callbacks)
+	Subscriber::Subscriber(const char* topicName, IMessageCallable* callbacks, Message* pTypedMessage)
 	{
 		this->impl = new SubscriberImplement();
 		this->impl->TopicName = topicName;
-		this->impl->TypeIDHashVal = msgType;
-		this->impl->pCallback = &callbacks;
+		TypeIDHash hash = pTypedMessage->GetTypeID();
+		this->impl->TypeIDHashVal = hash;
+		this->impl->pCallback = callbacks;
+		this->impl->pTypedMessage = pTypedMessage;
 		try
 		{
 			this->impl->Init();
@@ -62,7 +65,7 @@ namespace TinyROS
 			}
 			else
 			{
-				std::cout << "received " << len << " bytes\n";
+				// std::cout << "received " << len << " bytes\n";
 				std::thread handleThread(&SubscriberImplement::InvokeCallback, this, buf, len);
 				handleThread.detach();
 			}
@@ -71,7 +74,11 @@ namespace TinyROS
 
 	void Subscriber::SubscriberImplement::InvokeCallback(const char* buf, int len)
 	{
-		this->pCallback->InvokeAll(buf, len);
+		std::string s(buf, len);
+		Message* pMsg = this->pTypedMessage->NewDeserialize(s);
+		Message& msg = *pMsg;
+		this->pCallback->Invoke(msg);
+		delete pMsg;
 		delete[] buf;
 	}
 
