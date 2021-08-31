@@ -6,11 +6,12 @@ struct test
 {
 	int i;
 	int j;
+	int a[5];
 };
 
 void NormalCallback(TinyROS::SimpleObjectMessage<test> msg)
 {
-	std::cout << "normal callback: I am normal function, I received: " << msg.value.i << msg.value.j<< std::endl;
+	std::cout << "normal callback: I am normal function, I received: " << msg.Value.i << msg.Value.j<< msg.Value.a[0]<< msg.Value.a[1]<< std::endl;
 }
 
 class SampleClass
@@ -22,12 +23,12 @@ public:
     // 类内部的方法作为回调函数，函数签名一样，但是稍后注册方法不同
     void CallbackInObject(TinyROS::SimpleObjectMessage<test> msg)
     {
-        std::cout << "object callback: I am a member function of " << this->Name << ", I received: " << msg.value.i << msg.value.j<< std::endl;
+        std::cout << "object callback: I am a member function of " << this->Name << ", I received: " << msg.Value.i << msg.Value.j<< std::endl;
     }
     
     static void StaticMemberFuntion(TinyROS::SimpleObjectMessage<test> msg)
     {
-        std::cout << "static callback: I am a static member function of SampleClass, I received: " << msg.value.i << msg.value.j << std::endl;
+        std::cout << "static callback: I am a static member function of SampleClass, I received: " << msg.Value.i << msg.Value.j << std::endl;
     }
 };
 
@@ -40,7 +41,7 @@ public:
 	// 重载了括号，称为函数对象，可以像函数一样调用
 	void operator()(TinyROS::SimpleObjectMessage<test> msg)
 	{
-		std::cout << "functional object callback: I am an object named " << this->Name << ", I received: " << msg.value.i << msg.value.j << std::endl;
+		std::cout << "functional object callback: I am an object named " << this->Name << ", I received: " << msg.Value.i << msg.Value.j << std::endl;
 	}
 };
 
@@ -70,17 +71,17 @@ int main()
 		return -1;
 	}
 
-	TinyROS::MessageCallback callback(5);
+	TinyROS::MessageCallback<TinyROS::SimpleObjectMessage<test>> callback(5);
 
-	callback.Register<TinyROS::SimpleObjectMessage<test>>(NormalCallback);
+	callback.Register(NormalCallback);
 
-	SampleClass sampleObj("Noelle");
-	callback.Register<TinyROS::SimpleObjectMessage<test>>(&SampleClass::CallbackInObject, sampleObj);
+	//SampleClass sampleObj("Noelle");
+	//callback.Register(&SampleClass::CallbackInObject, sampleObj);
 
-	callback.Register<TinyROS::SimpleObjectMessage<test>>(SampleClass::StaticMemberFuntion);
+	//callback.Register(SampleClass::StaticMemberFuntion);
 
-	SampleFunctionalObjectClass sampleFunctionalObj("Barbara");
-	callback.Register<TinyROS::SimpleObjectMessage<test>>(sampleFunctionalObj);
+	//SampleFunctionalObjectClass sampleFunctionalObj("Barbara");
+	//callback.Register(sampleFunctionalObj);
 	try
 	{
 		pForSub = TinyROS::NewSubscriber<TinyROS::SimpleObjectMessage<test>>("Foolish Wu", callback);
@@ -94,13 +95,17 @@ int main()
 	test wu;
 	wu.i = 0;
 	wu.j = 1;
+	wu.a[0] = 2;
+	wu.a[1] = 3;
 	TinyROS::SimpleObjectMessage<test> msg(wu);
 
 	while (true)
 	{
 		wu.i += 1;
 		wu.j += 1;
-		msg.value = wu;
+		wu.a[0] += 1;
+		wu.a[1] += 1;
+		msg.Value = wu;
 		pForPub->Publish(msg);
 
 		using namespace std::chrono_literals;
