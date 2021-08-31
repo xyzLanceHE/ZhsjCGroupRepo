@@ -130,6 +130,7 @@ namespace TinyROS
 
 	Subscriber::SubscriberImplement::~SubscriberImplement()
 	{
+		delete this->pTypedMessage;
 		CloseSocket(this->SubscribeSocketFD);
 	}
 
