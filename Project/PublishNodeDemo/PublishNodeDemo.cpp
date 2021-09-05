@@ -2,14 +2,15 @@
 #include "TinyROS/TinyROS.h"
 #include <thread>
 
+template<int length>
 struct test
 {
 	int i;
 	int j;
-	int a[5];
+	int a[length];
 };
 
-void NormalCallback(TinyROS::SimpleObjectMessage<test> msg)
+void NormalCallback(TinyROS::SimpleObjectMessage<test<5>> msg)
 {
 	std::cout << "normal callback: I am normal function, I received: " << msg.Value.i << msg.Value.j<< msg.Value.a[0]<< msg.Value.a[1]<< std::endl;
 }
@@ -21,12 +22,12 @@ public:
     SampleClass(std::string name)
         : Name(name) { }
     // 类内部的方法作为回调函数，函数签名一样，但是稍后注册方法不同
-    void CallbackInObject(TinyROS::SimpleObjectMessage<test> msg)
+    void CallbackInObject(TinyROS::SimpleObjectMessage<test<5>> msg)
     {
         std::cout << "object callback: I am a member function of " << this->Name << ", I received: " << msg.Value.i << msg.Value.j<< std::endl;
     }
     
-    static void StaticMemberFuntion(TinyROS::SimpleObjectMessage<test> msg)
+    static void StaticMemberFuntion(TinyROS::SimpleObjectMessage<test<5>> msg)
     {
         std::cout << "static callback: I am a static member function of SampleClass, I received: " << msg.Value.i << msg.Value.j << std::endl;
     }
@@ -39,7 +40,7 @@ public:
 	SampleFunctionalObjectClass(std::string name)
 		: Name(name) { }
 	// 重载了括号，称为函数对象，可以像函数一样调用
-	void operator()(TinyROS::SimpleObjectMessage<test> msg)
+	void operator()(TinyROS::SimpleObjectMessage<test<5>> msg)
 	{
 		std::cout << "functional object callback: I am an object named " << this->Name << ", I received: " << msg.Value.i << msg.Value.j << std::endl;
 	}
@@ -63,7 +64,7 @@ int main()
 	TinyROS::Subscriber* pForSub;
 	try
 	{
-		pForPub = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<test>>("Foolish Wu");
+		pForPub = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<test<5>>>("Foolish Wu");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -71,7 +72,7 @@ int main()
 		return -1;
 	}
 
-	TinyROS::MessageCallback<TinyROS::SimpleObjectMessage<test>> callback(5);
+	TinyROS::MessageCallback<TinyROS::SimpleObjectMessage<test<5>>> callback(5);
 
 	callback.Register(NormalCallback);
 
@@ -84,7 +85,7 @@ int main()
 	//callback.Register(sampleFunctionalObj);
 	try
 	{
-		pForSub = TinyROS::NewSubscriber<TinyROS::SimpleObjectMessage<test>>("Foolish Wu", callback);
+		pForSub = TinyROS::NewSubscriber<TinyROS::SimpleObjectMessage<test<5>>>("Foolish Wu", callback);
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -92,12 +93,12 @@ int main()
 		return -1;
 	}
 
-	test wu;
+	test<5> wu;
 	wu.i = 0;
 	wu.j = 1;
 	wu.a[0] = 2;
 	wu.a[1] = 3;
-	TinyROS::SimpleObjectMessage<test> msg(wu);
+	TinyROS::SimpleObjectMessage<test<5>> msg(wu);
 
 	while (true)
 	{

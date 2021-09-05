@@ -1,136 +1,20 @@
 #include <stdio.h>
 #include <math.h>
-#include "TinyROS/TinyROS.h"
+#include <TinyROS/TinyROS.h>
+#include <iostream>
 //#error 尽量使用constexpr而不是宏定义
-constexpr int xMax = 20;
-constexpr int yMax = 20;
+//constexpr int xMax = 20;
+//constexpr int yMax = 20;
 
-////#error 致吴勇同志：你TM能不能好好看下文件，让你写在命名空间里你不写
-////
-////#error 请再次阅读命名规范
-//
-//struct location
-//{
-//	int x;
-//	int y;
-//};
-////int a[20][20];
-//int targetx, targety;
-//int carx, cary;
-//int barrierx[20], barriery[20];
-//int xyMax(int barrierx[20])
-//{
-//	int maxX = 0;
-//	for(int i = 0; i < 20; i++)
-//	{
-//		if (barrierx[i] > maxX)
-//		{
-//			maxX = barrierx[i];
-//		}
-//	}
-//	return maxX;
-//}
-//
-//int xyMin(int barrierx[20])
-//{
-//	int minX = 100;
-//	for (int i = 0; i < 20; i++)
-//	{
-//		if (barrierx[i] < minX && barrierx[i])
-//		{
-//			minX = barrierx[i];
-//		}
-//	}
-//	return minX;
-//}
-//
-////void setZero(int a[20][20])
-////{
-////	for (int i = 0; i < 20; i++)
-////	{
-////		for (int j = 0; j < 20; i++)
-////		{
-////			a[i][j] = 0;
-////		}
-////	}
-////}
-//
-//void setPoint(int a[20][20], int carx, int cary, int targetx, int targety)
-//{
-//	a[carx][cary] = 1;
-//	a[targetx][targety] = 2;
-//}
-//
-//void getBarrierDir(double* barrierAngle, int carx, int cary, int maxBarrierX, int maxBarrierY, int minBarrierX, int minBarrierY)
-//{
-//	double maxAngle, minAngle, temp;
-//#error atan不包含象限信息，无法判断角度属于哪个象限，请考虑使用atan2
-//#error 请考虑使用标准库rtod函数将弧度转化为角度
-//	maxAngle = atan((maxBarrierY - cary) / (maxBarrierY - carx)) / PI * 180.0;
-//	minAngle = atan((minBarrierY - cary) / (minBarrierY - carx)) / PI * 180.0;
-//	if (maxAngle < minAngle)
-//	{
-//		temp = maxAngle;
-//		maxAngle = minAngle;
-//		minAngle = temp;
-//	}
-//	barrierAngle[1] = maxAngle;
-//	barrierAngle[2] = minAngle;
-//}
-//
-//double getDefaultDir(int carx, int cary, int targetx, int targety)
-//{
-//	double angle;
-//	angle = atan((targety - cary) / (targetx - carx))/PI * 180.0;
-//	return angle;
-//}
-//
-//#error do you mean straight?
-//int canGoStraite(double defaultAngle, double maxAngle, double minAngle)
-//{
-//	if (defaultAngle > maxAngle || defaultAngle < minAngle)
-//	{
-//		return 1;
-//	}
-//	return 0;
-//}
-//
-//
-//
-//int main()
-//{
-//	/*int a[10];
-//	int b;
-//	b = 10;
-//	char numberstring[((sizeof(a) * CHAR_BIT) + 2) / 3 + 2];
-//	sprintf(numberstring, "%d", a);
-//	func(numberstring);*/
-//
-//	//stringstream strs;
-//	//strs << num;
-//	//string temp = strs.str();
-//	//char* charNum = (char*)temp.c_str();
-//	//func(charNum);
-//
-//	system("pause");
-//	return 0;
-//}
-//#error 从模块功能上看，你应该把这些东西放在RoboTax命名空间下
-//#error 目前来说，基本上不会有什么应该放到TinyROS下的，除了自定义的Message类型（而且也不是非得放）
 namespace RoboTax
 {
-//#error TinyROS下恰好就有一个Node类，这样肯定编译不过
-//#error 这就是为什么要分命名空间
 	struct Node
 	{
 		int X;//数组行号
 		int Y;//数组列号
-//#error 建议使用bool类型，并且起一个意义更加明确的名字，我猜你想表达IsBarrier？
-		bool B;//标识能否扩展
-//#error int类型合适吗？
+		bool IsBarrier;//标识能否扩展
 		double G;//已经花费的代价
 		double F;//预计到目标还要的代价
-//#error 需要重复写struct关键字是C的特性，C++可以去掉，直接Node就好了，后面的函数参数、变量声明同理
 		Node* PNext;//子节点
 		Node* PFather;//父节点
 	};
@@ -151,15 +35,14 @@ namespace RoboTax
 //#error 直接写成构造函数啊。C++的struct也是类，只是默认访问权限不同
 	Node *NewNode(int x, int y, int b)
 	{
-//#error 使用nullptrptr关键词，而不是nullptr，建议直接查找替换
 		Node* pNode = nullptr;
 //#error 写成构造函数之后，就不用分配内存了，在外面直接声明变量，或者使用new运算符分配变量并得到指针
 //#error 使用C++的类型转换符而不是C风格的，如果写成构造函数甚至不需要转化
-		pNode = (Node*)malloc(sizeof(Node));
+		pNode = new Node;
 		if (pNode == nullptr) return nullptr;
 		pNode->X = x;
 		pNode->Y = y;
-		pNode->B = b;
+		pNode->IsBarrier = b;
 		pNode->G = 0;
 		pNode->F = 0;
 		pNode->PFather = nullptr;
@@ -177,7 +60,7 @@ namespace RoboTax
 			pNode = pList;
 			pList = pList->PNext;
 //#error 直接使用delete运算符即可，并且可以在析构函数中进行需要的处理
-			free(pNode);
+			delete pNode;
 		}
 	}
 
@@ -220,18 +103,28 @@ namespace RoboTax
 //#error 自己写链表的时候，也可以参考STL容器的一些常见风格，尤其是做好内存管理并提供迭代器，例如本函数，找到节点则返回该节点的迭代器，否则返回的迭代器==list.end()
 	Node* IsNodeInList(Node* pNode, Node* pList)
 	{
-		if (pList == nullptr) return nullptr;
-		if (Compare(pNode, pList)) return pList;
-		return IsNodeInList(pNode, pList->PNext);
+		//if (pList == nullptr) return nullptr;
+		//if (Compare(pNode, pList)) return pList;
+		//return IsNodeInList(pNode, pList->PNext);
+		while (pList != nullptr)
+		{
+			if (Compare(pNode, pList))
+			{
+				break;
+				return pList;
+			}
+			pList = pList->PNext;
+		}
+		return nullptr;
 	}
 
 //#error 建议封装成类，可以避免递归的写法
-	void PrintPath(Node* pGoal)
-	{
-		if (pGoal == nullptr) return;
-		PrintPath(pGoal->PFather);
-		printf("(%d %d)\n", pGoal->X, pGoal->Y);
-	}
+	//void PrintPath(Node* pGoal)
+	//{
+	//	if (pGoal == nullptr) return;
+	//	PrintPath(pGoal->PFather);
+	//	printf("(%d %d)\n", pGoal->X, pGoal->Y);
+	//}
 
 //#error 好像没见你赋值过pFather啊，怎么就用上了（如果赋值了当我没说）每拓展一个节点都会把新节点的父指针指向他
 	int IsGrandFather(Node* pNode, Node* pFather)
@@ -243,31 +136,38 @@ namespace RoboTax
 
 //#error 建议改名，因为此函数具有泛用性
 //#error 建议改成inline
-	bool IsGoal(Node* pNode, int goalX, int goalY)
+	inline bool IsReach(Node* pNode, int goalX, int goalY)
 	{
-		if (pNode->X == goalX && pNode->Y == goalY ) 
+		if (pNode->X == goalX && pNode->Y == goalY)
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
-	bool IsLeagal(struct Node* pNode)
+	bool IsLeagal(Node* pNode, int xMax, int yMax)
 	{
-		if (pNode->X<0 ||
-			pNode->Y<0 ||
-			pNode->B==1 || pNode->X >= xMax|| pNode->Y >= yMax)
+		if (pNode->X < 0 ||
+			pNode->Y < 0 ||
+			pNode->IsBarrier == 1 ||
+			pNode->X >= xMax ||
+			pNode->Y >= yMax)
+		{
 			return false;
+		}
 		 return true;
 	}
 
-//#error 建议改成inline
-	int CalculateH(Node* pNode, int goalX, int goalY)
+	inline int CalculateH(Node* pNode, int goalX, int goalY)
 	{
 		return(sqrt(pow((goalY - pNode->Y), 2) + pow((goalX - pNode->X), 2)));
 	}
 
 //#error 建议将数组参数改为指针，数组长度作为变量传入，以提高扩展性
-	Node* AStar(Node* start, int goalX, int goalY, int map[xMax][yMax])
+	int* AStar(Node* start, int goalX, int goalY, int* map, int xMax, int yMax)
 	{
 //#error 如果封装List类，这里就使用List类型
 //#error 关于List类的一些建议：List类内维护一些实用指针，例如链表两头的指针，以提高效率
@@ -280,11 +180,20 @@ namespace RoboTax
 		int i, j;
 		pOpen = start;
 		pClose = nullptr;
-//#error 建议使用具有显示bool类型的表达式
 		while (pOpen != nullptr)
 		{
 			n = pOpen;
-			if (IsGoal(n, goalX, goalY)) return n;
+			if (IsReach(n, goalX, goalY))
+			{
+				while (n)
+				{
+					map[n->X* yMax+n->Y] = 3;
+					n = n->PFather;
+				}
+				FreeList(pOpen);
+				FreeList(pClose);
+				return map;
+			}
 			pOpen = pOpen->PNext;
 			pClose = AddToList(n, pClose);
 			//产生新一轮的popen
@@ -292,11 +201,14 @@ namespace RoboTax
 			{
 				for (j = -1; j <= 1; j++)
 				{
-//#error 如前所述，将NewNode写成构造函数，并使用new运算符，相应地使用delete运算符
-					m = NewNode(n->X + i, n->Y + j, (map[n->X + i][n->Y + j]!=0));//拓展子节点
-					if (IsGrandFather(m, n) || !IsLeagal(m))
+					if (n->X + i < 0 || n->X + i >= xMax || n->Y + j < 0 || n->Y + j >= yMax)
 					{
-						free(m);
+						continue;
+					}
+					m = NewNode(n->X + i, n->Y + j, (map[(n->X + i) * yMax + (n->Y + j)] != 0));//拓展子节点
+					if (IsGrandFather(m, n) || !IsLeagal(m, xMax, yMax))
+					{
+						delete m;
 						continue;
 					}
 					m->PFather = n;
@@ -309,11 +221,11 @@ namespace RoboTax
 						if (m->F < pNode->F)
 						{
 							pOpen = AddToListForOpen(m, DelNode(pNode, pOpen));
-							free(pNode);
+							delete pNode;
 						}
 						else
 						{
-							free(m);
+							delete m;
 						}
 					}
 					else if (IsNodeInList(m, pClose))
@@ -323,11 +235,11 @@ namespace RoboTax
 						{
 							pClose = DelNode(pNode, pClose);
 							pOpen = AddToListForOpen(m, pOpen);
-							free(pNode);
+							delete pNode;
 						}
 						else
 						{
-							free(m);
+							delete m;
 						}
 					}
 					else
@@ -340,13 +252,60 @@ namespace RoboTax
 //#error 为什么只会return空指针呢  因为不返回空指针的结果在前面就返回了，返回空指针说明没找到
 		return nullptr;
 	}
-	void RunAStar(int startX, int startY, int goalX, int goalY, int map[xMax][yMax])
+	void RunAStar(int startX, int startY, int goalX, int goalY, int *map, int xMax, int yMax)
 	{
 		Node* start;
 		Node* goal;
 		start = NewNode(startX, startY, false);
-		goal = AStar(start, goalX, goalY, map);
-		if (goal) PrintPath(goal);
-		else printf("搜索失败");
+		map = AStar(start, goalX, goalY, map, xMax, yMax);
+		if (map != nullptr)
+		{
+			for (int i = 0; i < xMax; i++)
+			{
+				for (int j = 0; j < yMax; j++)
+				{
+					std::cout << map[i * yMax + j] <<"  ";
+				}
+				std::cout << std::endl;
+			}
+		}
+		else std::cout << "搜索失败";
 	}
+}
+int main()
+{
+	int xMax = 20;
+	int yMax = 20;
+	int map[400] = { 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,
+					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,
+					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,
+					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+					 0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+					 0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0 };
+	for (int i = 0; i < xMax; i++)
+	{
+		for (int j = 0; j < yMax; j++)
+		{
+			std::cout << map[i * yMax + j] << "  ";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+	RoboTax::RunAStar(19, 0, 0, 19, map, xMax, yMax);
+	system("pause");
+	return 0;
 }
