@@ -53,7 +53,7 @@ int main()
     try
     {
         // 一句话即可。参数是本节点的名字，在局域网中必须是唯一的
-        TinyROS::Node::Init("Hello world listener");
+        TinyROS::Node::Init("Hello World Listener");
     }
     catch (TinyROS::TinyROSException& e)
     {
