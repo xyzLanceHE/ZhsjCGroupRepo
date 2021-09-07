@@ -27,10 +27,11 @@ struct map
 						 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0 };
 };
 
-void NormalCallback(TinyROS::StringMessage msg)
+void ChangeMapFlag(TinyROS::StringMessage msg)
 {
 	flag = 1;
 }
+
 int main()
 {
 	map rawMap;
@@ -47,7 +48,7 @@ int main()
 	}
 	//定义节点
 	TinyROS::Publisher* mapPublisher;
-	TinyROS::Publisher* mapSubscriber;
+	TinyROS::Subscriber* mapSubscriber;
 	try
 	{
 		mapPublisher = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<map>>("localMap");
@@ -59,7 +60,16 @@ int main()
 	}
 
 	TinyROS::MessageCallback<TinyROS::StringMessage> callback(1);
-	callback.Register(NormalCallback);
+	callback.Register(ChangeMapFlag);
+	try
+	{
+		mapSubscriber = TinyROS::NewSubscriber<TinyROS::StringMessage>("StartOrder", callback);
+	}
+	catch (TinyROS::TinyROSException& e)
+	{
+		std::cout << e.what();
+		return -1;
+	}
 	while (true)
 	{
 		if (flag == 1)
