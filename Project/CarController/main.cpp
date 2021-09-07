@@ -1,19 +1,27 @@
-<<<<<<< HEAD
-//#include "TinyROS/TinyROS.h"
-//
-//int main()
-//{
-//	TinyROS::Node::HelloWorld();
-//	return 0;
-//}
-=======
 #include <iostream>
+#include <string>
+#include "TinyROS/TinyROS.h"
 
-int main()
+int main(int argc, char* argv[])
 {
+	std::string nodeName;
 
-	int hangOn;
-	std::cin >> hangOn;
+	if (argc < 2)
+	{
+		std::cout << "该程序需要一个参数作为节点名称\n";
+		return -1;
+	}
+	else
+	{
+		nodeName = argv[1];
+	}
+	std::cout << "Initializing this as Node " << nodeName << std::endl;
+	TinyROS::Node::Init(nodeName.c_str());
+
+	std::cout << "Init success\n";
+	TinyROS::Node::Close();
+
+
 	return 0;
 }
->>>>>>> cd628ce5803c502ba3275b9e3b43dcebf4127c0d
+
