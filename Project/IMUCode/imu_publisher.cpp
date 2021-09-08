@@ -9,8 +9,10 @@
 #include    <string.h>
 #include    <iostream>
 
+#include "TinyROS/TinyROS.h"
+#include <thread>
 
-#define DEV_NAME  "/dev/ttyUSB0"//数字随机更改
+#define DEV_NAME  "/dev/ttyUSB0"//数字随文件名更改
 //#define uint8_t unsigned char
 //#define uint16_t unsigned int
 
@@ -69,6 +71,31 @@ int main (int argc, char *argv[])
     }
     std::cout<<"串口配置完成"<<std::endl;
 
+    //publisher
+    //节点初始化
+    try
+    {
+        TinyROS::Node::Init("IMUNode");
+    }
+    catch (TinyROS::TinyROSException& e)
+    {
+        std::cout << e.what();
+        return -1;
+    }
+
+    TinyROS::Publisher* IMUPub;
+    try
+    {
+        IMUPub = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<float>>("imu");
+    }
+    catch (TinyROS::TinyROSException& e)
+    {
+        std::cout << e.what();
+        return -1;
+    }
+
+    TinyROS::SimpleObjectMessage<float> msg;
+
     //数据读取
     unsigned char buf[82];
     while(1)
@@ -87,7 +114,8 @@ int main (int argc, char *argv[])
             printf("yaw:%f\n",dat.eul[2]);//z轴
             
             //publisher
-
+            msg.Value = dat.eul[2];
+            IMUPub->Publish(msg);
 
             //运行频率
             sleep(0.1);//10Hz
@@ -97,5 +125,3 @@ int main (int argc, char *argv[])
     close(fd);
     return(0);
 }
- 
-
