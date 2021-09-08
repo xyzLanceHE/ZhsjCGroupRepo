@@ -1,0 +1,14 @@
+diff a/Project/ds_twr_init/main.c b/Project/ds_twr_init/main.c	(rejected hunks)
+@@ -147,9 +147,9 @@
+  * As they are 40-bit wide, we need to define a 64-bit int type to handle them. */
+ typedef signed long long int64;
+ typedef unsigned long long uint64;
+-static uint64 poll_rx_ts;
+-static uint64 resp_tx_ts;
+-static uint64 final_rx_ts;
++//static uint64 poll_rx_ts;
++//static uint64 resp_tx_ts;
++//static uint64 final_rx_ts;
+ 
+ static uint64 poll_tx_ts;
+ static uint64 resp_rx_ts;
