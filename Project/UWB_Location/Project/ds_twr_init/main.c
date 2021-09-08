@@ -960,14 +960,14 @@ static void distance_mange(void)
     {
         sprintf(dist_str, "an1:%3.2fm", (float)Anthordistance[1]/1000);      
         OLED_ShowString(0, 4,(uint8_t *)dist_str);
-				printf("an1:%3.3f  ",(float)Anthordistance[0]/1000);
+				printf("an1:%3.3f  ",(float)Anthordistance[1]/1000);
     }
 
     if(Anthordistance_count[2]>0)
     {
         sprintf(dist_str, "an2:%3.2fm", (float)Anthordistance[2]/1000);       
         OLED_ShowString(0, 6,(uint8_t *)dist_str);
-				printf("an2:%3.3f  ",(float)Anthordistance[0]/1000);
+				printf("an2:%3.3f  ",(float)Anthordistance[2]/1000);
     }
 		
     if((Anthordistance_count[0]>0)||(Anthordistance_count[1]>0)||(Anthordistance_count[2]>0))
