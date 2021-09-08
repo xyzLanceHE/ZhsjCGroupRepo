@@ -7,16 +7,12 @@
 //#include <sys/time.h>
 //#include <sys/types.h>
 #include <errno.h>
-
+#include <math.h>
 #include "CarController.h"
 
 namespace RoboTax
 {
 
-	termios DefaultSerialPortParam =
-	{
-
-	};
 
 	class CarControllerInterface::CarControllerInterfaceImplement
 	{
@@ -61,7 +57,7 @@ namespace RoboTax
 		cfsetispeed(&portConfig, B19200);
 		cfsetospeed(&portConfig, B19200);
 
-		portConfig.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);//使串口工作在原始模式下
+		portConfig.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 
 		ret = tcsetattr(this->impl->SerialPortFD, TCSANOW, &portConfig);
 		if (ret == -1)
@@ -79,7 +75,24 @@ namespace RoboTax
 
 	void CarControllerInterface::SetSpeed(float linear, float radius)
 	{
-		write(this->impl->SerialPortFD, "00001111", 8);
+		float rmm = std::abs(radius * 1000);
+		float ctr = 0;
+		if (rmm < 9999.0f)
+		{
+			if (radius <= 0.0f)
+			{
+				ctr = 1;
+			}
+			else
+			{
+				ctr = 2;
+			}
+		}
+		int l = ((int)(linear * 1000)) % 1000;
+		int r = ((int)rmm) % 10000;
+		char cmd[8];
+		sprintf(cmd, "%04d%1d%03d", l, ctr, r);
+		write(this->impl->SerialPortFD, cmd, 8);
 	}
 
 }
