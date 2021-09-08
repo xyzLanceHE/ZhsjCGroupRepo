@@ -28,5 +28,17 @@ namespace RoboTax
 	using CarVelocityMessage = TinyROS::SimpleObjectMessage<CarVelocity>;
 #pragma endregion
 
+#pragma region 地图消息
+	// editor: 吴勇
+	// 地图结构体
+	struct Map
+	{
+		int a[400];
+	};
+
+	// 小车速度消息别名
+	using MapMessage = TinyROS::SimpleObjectMessage<Map>;
+#pragma endregion
+
 
 }
