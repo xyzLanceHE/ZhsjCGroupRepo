@@ -56,6 +56,7 @@ int main(int argc, char* argv[])
 {
 
 	ParseArgs(argc, argv);
+	RoboTax::CarControllerInterface testController(PortPath.c_str());
 
 	std::cout << "Initializing this as Node " << NodeName << std::endl;
 	TinyROS::Node::Init(NodeName.c_str());

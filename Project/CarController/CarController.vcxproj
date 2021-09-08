@@ -77,6 +77,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClCompile Include="CarController.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -84,6 +85,9 @@
       <FileType>Document</FileType>
     </Library>
     <Library Include="..\Share\OpenSSL\lib\Linux_ARM\libcrypto_arm.a" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CarController.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
