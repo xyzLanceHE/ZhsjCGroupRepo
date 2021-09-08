@@ -23,6 +23,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Messages.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Node.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Publisher.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\SharedMessageTypes.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Subscriber.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -47,6 +48,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Messages.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Node.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Publisher.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\SharedMessageTypes.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Subscriber.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROS.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\TinyROSDef.h" />

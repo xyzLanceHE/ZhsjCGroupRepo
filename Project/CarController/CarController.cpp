@@ -76,7 +76,7 @@ namespace RoboTax
 	void CarControllerInterface::SetSpeed(float linear, float radius)
 	{
 		float rmm = std::abs(radius * 1000);
-		float ctr = 0;
+		int ctr = 0;
 		if (rmm < 9999.0f)
 		{
 			if (radius <= 0.0f)
@@ -91,7 +91,7 @@ namespace RoboTax
 		int l = ((int)(linear * 1000)) % 1000;
 		int r = ((int)rmm) % 10000;
 		char cmd[8];
-		sprintf(cmd, "%04d%1d%03d", l, ctr, r);
+		sprintf(cmd, "%03d%1d%04d", l, ctr, r);
 		write(this->impl->SerialPortFD, cmd, 8);
 	}
 

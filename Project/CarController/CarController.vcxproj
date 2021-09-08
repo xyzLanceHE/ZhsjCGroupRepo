@@ -89,6 +89,9 @@
   <ItemGroup>
     <ClInclude Include="CarController.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="RunCarExample.sh" />
+  </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>TINYROS_ON_LINUX</PreprocessorDefinitions>
