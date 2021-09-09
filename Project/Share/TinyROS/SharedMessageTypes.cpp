@@ -79,7 +79,7 @@ namespace RoboTax
     {
         this->Width = other.Width;
         this->Height = other.Height;
-        this->pData = new unsigned char[other.Height + other.Width];
+        this->pData = new unsigned char[other.Height * other.Width];
         std::copy(other.pData, other.pData + other.Width * other.Height, this->pData);
     }
 
@@ -102,7 +102,7 @@ namespace RoboTax
         return this->pData[index];
     }
 
-    unsigned char& MapMessage::RefAt(int col, int row)
+    unsigned char& MapMessage::RefAt(int row, int col)
     {
         int index = row * this->Width + col;
         if (index < 0 || index >= this->Height * this->Width)

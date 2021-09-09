@@ -26,6 +26,11 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OrderFilterNode", "OrderFilterNode\OrderFilterNode.vcxproj", "{DF5B0C65-16A9-406D-9F66-CA94729A6AD1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UwbComNode", "UwbComNode\UwbComNode.vcxproj", "{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}"
+<<<<<<< HEAD
+=======
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZeroSpeedOrderNode", "ZeroSpeedOrderNode\ZeroSpeedOrderNode.vcxproj", "{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}"
+>>>>>>> ea7a85603dfe71a32770a24df58453d21be80c03
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -233,6 +238,21 @@ Global
 		{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}.Release|x86.ActiveCfg = Release|x86
 		{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}.Release|x86.Build.0 = Release|x86
 		{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}.Release|x86.Deploy.0 = Release|x86
+<<<<<<< HEAD
+=======
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Debug|ARM.ActiveCfg = Debug|Win32
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Debug|x64.ActiveCfg = Debug|x64
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Debug|x64.Build.0 = Debug|x64
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Debug|x86.ActiveCfg = Debug|Win32
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Debug|x86.Build.0 = Debug|Win32
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Release|ARM.ActiveCfg = Release|Win32
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Release|ARM64.ActiveCfg = Release|Win32
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Release|x64.ActiveCfg = Release|x64
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Release|x64.Build.0 = Release|x64
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Release|x86.ActiveCfg = Release|Win32
+		{D1EAA7D7-4884-4899-BD0A-F7A0C016568F}.Release|x86.Build.0 = Release|Win32
+>>>>>>> ea7a85603dfe71a32770a24df58453d21be80c03
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

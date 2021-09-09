@@ -13,7 +13,7 @@ using namespace cv;
 using namespace std;
 
 //轮廓按照面积大小升序排序
-/*bool ascendSort(vector<Point> a, vector<Point> b)
+bool ascendSort(vector<Point> a, vector<Point> b)
 {
 	return a.size() < b.size();
 }
@@ -24,20 +24,22 @@ bool descendSort(vector<Point> a, vector<Point> b) {
 static inline bool ContoursSortFun(vector<cv::Point> contour1, vector<cv::Point> contour2)
 {
 	return (cv::contourArea(contour1) > cv::contourArea(contour2));
-}*/
+}
 void main()
 {
 	//从摄像头读入视频  
 	VideoCapture capture(1);//打开摄像头  
-	if (!capture.isOpened())//没有打开摄像头的话，就返回。
+	if (!capture.isOpened())
 		return;
-	Mat edges; //定义一个Mat变量，用于存储每一帧的图像
-			   //循环显示每一帧  
+	Mat edges; //定义一个Mat变量，用于存储每一帧的图像，循环显示每一帧 
+	float KNOWN_WIDTH, TEST_WIDTH, Observed[20];
+	int count = 0;
+	cout << "\nPlease enter the obstacle width(mm):";
+	cin >> KNOWN_WIDTH;
 	while (1)
 	{
 		Mat frame; //定义一个Mat变量，用于存储每一帧的图像  
 		capture >> frame;  //读取当前帧   
-		//imshow("Video0", frame);
 		if (frame.empty())
 		{
 			break;
@@ -79,14 +81,24 @@ void main()
 					line(frame, rect[j], rect[(j + 1) % 4], Scalar(0, 0, 255), 1, 8);//绘制最小外接矩形的每条边
 				}
 			}
-			float D = (200 * 1921.58) / width;
+			float D = (KNOWN_WIDTH * 1302.8) / width;
+			Observed[count] = D;
 			char tam[100];
 			sprintf_s(tam, "D=:%lf", D);
 			putText(frame, tam, Point(100, 100), FONT_HERSHEY_SIMPLEX, 1, cvScalar(255, 0, 255), 1, 8);
-			imshow("Video2", mask); //显示当前帧  
-			imshow("Video3", frame);
+			//imshow("Video2", mask); //显示当前帧  
+			imshow("Video", frame);
+
 		}
-		waitKey(30); //延时30ms  
+		waitKey(50); //延时50ms  
+		count++; 
+		if (count >= 20)
+		{
+			sort(Observed, Observed+20);
+			TEST_WIDTH = Observed[10];
+			cout << "TEST_WIDTH=" << TEST_WIDTH << endl;
+			count = 0;
+		}
 	}
 	capture.release();//释放资源
 	destroyAllWindows();//关闭所有窗口
