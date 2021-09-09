@@ -11,6 +11,10 @@
 #include <iostream> 
 #include <fstream> 
 
+
+#include "TinyROS/TinyROS.h"
+#include <thread>
+
 #define ComAddress  "/dev/ttyUSB0"
 #define MemoryData 5
 struct coordinate
@@ -123,8 +127,36 @@ coordinate ThreeCheck(float dis[])
     return point;
 }
 
+// 回调函数的形式：返回值是void，参数是收到的消息
+void NormalCallback(TinyROS::StringMessage msg);
+
 int main()
 {
+    try
+    {
+        TinyROS::Node::Init("UwbComNode");
+    }
+    catch (TinyROS::TinyROSException& e)
+    {
+        std::cout << e.what();
+        return -1;
+    }
+    //定义节点
+    TinyROS::Publisher* uwb_ageru;
+    //TinyROS::MessageCallback<TinyROS::StringMessage> callback(3);
+    //callback.Register(NormalCallback);
+
+    try
+    {
+        uwb_ageru = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<coordinate>>("UWB");
+    }
+    catch (TinyROS::TinyROSException& e)
+    {
+        std::cout << e.what();
+        return -1;
+    }
+
+    //程序开始
     printf("Link Successed\n"); 
     int fd;
     int nread;
@@ -153,6 +185,7 @@ int main()
     int p=0;
     float ave; 
     coordinate point = { 0,0 };
+    TinyROS::SimpleObjectMessage<coordinate> msg(point);
 
     while (1)
     {
@@ -179,8 +212,13 @@ int main()
             dis[2] = ave;
         //printf("0:%3.3f 1:%3.3f 2:%3.3f\n", dis0, dis1, dis2);
         point = ThreeCheck(dis);
-        printf("X:%3.2f Y:%3.2f\n", point.x, point.y);
+        printf("X:%3.2f Y:%3.2f\n", point.x, point.y); 
+
+        //发布消息
+        uwb_ageru->Publish(msg);
     }
+
+    // 程序退出之前，关闭Node，释放fd
     close(fd);
-    return 0;
+    TinyROS::Node::Close();
 }

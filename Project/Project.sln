@@ -23,15 +23,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PublishNodeDemo", "PublishN
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MapNode", "MapNode\MapNode.vcxproj", "{04A1D3D2-CBA6-4F1B-A235-525CC9C22D75}"
 EndProject
-<<<<<<< HEAD
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OrderFilterNode", "OrderFilterNode\OrderFilterNode.vcxproj", "{DF5B0C65-16A9-406D-9F66-CA94729A6AD1}"
-=======
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UwbComNode", "UwbComNode\UwbComNode.vcxproj", "{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}"
->>>>>>> c868e211c265e69e9e11eaa9cd8b5748239057c7
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Share\Share.vcxitems*{04a1d3d2-cba6-4f1b-a235-525cc9c22d75}*SharedItemsImports = 4
+		Share\Share.vcxitems*{0678372b-6cf8-4268-a9d3-4cb95b0b3a28}*SharedItemsImports = 4
 		Share\Share.vcxitems*{21a1719a-e68d-4131-96b6-a523678de8eb}*SharedItemsImports = 4
 		Share\Share.vcxitems*{2ad608e7-24c2-45d6-9290-aade79492f67}*SharedItemsImports = 4
 		Share\Share.vcxitems*{35464a64-6bf2-4cec-85ec-d5bfbce5d9bd}*SharedItemsImports = 4
@@ -198,7 +197,6 @@ Global
 		{04A1D3D2-CBA6-4F1B-A235-525CC9C22D75}.Release|x64.Build.0 = Release|x64
 		{04A1D3D2-CBA6-4F1B-A235-525CC9C22D75}.Release|x86.ActiveCfg = Release|Win32
 		{04A1D3D2-CBA6-4F1B-A235-525CC9C22D75}.Release|x86.Build.0 = Release|Win32
-<<<<<<< HEAD
 		{DF5B0C65-16A9-406D-9F66-CA94729A6AD1}.Debug|ARM.ActiveCfg = Debug|Win32
 		{DF5B0C65-16A9-406D-9F66-CA94729A6AD1}.Debug|ARM64.ActiveCfg = Debug|Win32
 		{DF5B0C65-16A9-406D-9F66-CA94729A6AD1}.Debug|x64.ActiveCfg = Debug|x64
@@ -211,7 +209,6 @@ Global
 		{DF5B0C65-16A9-406D-9F66-CA94729A6AD1}.Release|x64.Build.0 = Release|x64
 		{DF5B0C65-16A9-406D-9F66-CA94729A6AD1}.Release|x86.ActiveCfg = Release|Win32
 		{DF5B0C65-16A9-406D-9F66-CA94729A6AD1}.Release|x86.Build.0 = Release|Win32
-=======
 		{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}.Debug|ARM.ActiveCfg = Debug|ARM
 		{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}.Debug|ARM.Build.0 = Debug|ARM
 		{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}.Debug|ARM.Deploy.0 = Debug|ARM
@@ -236,7 +233,6 @@ Global
 		{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}.Release|x86.ActiveCfg = Release|x86
 		{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}.Release|x86.Build.0 = Release|x86
 		{0678372B-6CF8-4268-A9D3-4CB95B0B3A28}.Release|x86.Deploy.0 = Release|x86
->>>>>>> c868e211c265e69e9e11eaa9cd8b5748239057c7
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
