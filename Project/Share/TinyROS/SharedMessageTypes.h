@@ -60,9 +60,9 @@ namespace RoboTax
 		// 移动构造
 		MapMessage(MapMessage&& other);
 		// 获取地图上指定行、列的元素值，索引从0开始
-	    unsigned char At(int col, int row);
+	    unsigned char At(int row, int col);
 		// 获取地图上指定行、列的元素的引用，索引从0开始
-		unsigned char& RefAt(int col, int row);
+		unsigned char& RefAt(int row, int col);
 		// 获取地图宽度（列数）
 		int GetWidth();
 		// 获取地图长度（行数）
