@@ -102,6 +102,16 @@ namespace RoboTax
         return this->pData[index];
     }
 
+    unsigned char& MapMessage::RefAt(int col, int row)
+    {
+        int index = row * this->Width + col;
+        if (index < 0 || index >= this->Height * this->Width)
+        {
+            throw std::out_of_range(std::to_string(index));
+        }
+        return this->pData[index];
+    }
+
     int MapMessage::GetWidth()
     {
         return this->Width;

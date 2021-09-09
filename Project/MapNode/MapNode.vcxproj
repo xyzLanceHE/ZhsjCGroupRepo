@@ -144,6 +144,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MapNode.cpp" />
+    <ClCompile Include="MapTools.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MapTools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
