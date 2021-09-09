@@ -1,7 +1,7 @@
 {
   "MulticastIP": "239.0.1.10",
   "MulticastPort": 6666,
-  "ListenIP": "192.168.1.5",
+  "ListenIP": "100.75.159.238",
   "ListenPort": 6661,
   "MulticastLocalBindPort": 6660,
   "TopicStartPort": 6670
