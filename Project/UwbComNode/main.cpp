@@ -7,12 +7,18 @@
 #include <termios.h>    /*PPSIX 终端控制定义*/
 #include <errno.h>      /*错误号定义*/
 #include <string.h>
+#include <math.h>
 #include <iostream> 
 #include <fstream> 
 
 #define ComAddress  "/dev/ttyUSB0"
 #define MemoryData 5
-
+struct coordinate
+{
+    float x;
+    float y;
+};
+coordinate Base[3] = { { 0,0 },{ 1,0 },{ 0,1 } };
 /**
 *@brief  设置串口属性
 */
@@ -80,6 +86,43 @@ float average(float an[MemoryData])
     return dis;
 }
 
+coordinate ThreeCheck(float dis[])
+{
+    coordinate point = { 0,0 };
+    for (int i = 0; i < 3; i++)
+        if (dis[i] <= 0)
+            return point;
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = i + 1; j < 3; j++)
+        {
+            //圆心距离PQ
+            float p2p = (float)sqrt((Base[i].x - Base[j].x) * (Base[i].x - Base[j].x) + (Base[i].y - Base[j].y) * (Base[i].y - Base[j].y));
+            //判断两圆是否相交
+            if (dis[i] + dis[j] <= p2p)
+            {
+                //不相交，按比例求
+                point.x += Base[i].x + (Base[j].x - Base[i].x) * dis[i] / (dis[i] + dis[j]);
+                point.y += Base[i].y + (Base[j].y - Base[i].y) * dis[i] / (dis[i] + dis[j]);
+            }
+            else
+            {
+                //相交则套用公式
+                //PC
+                float dr = p2p / 2 + (dis[i] * dis[i] - dis[j] * dis[j]) / (2 * p2p);
+                //x = xp + (xq-xp) * PC / PQ
+                point.x += Base[i].x + (Base[j].x - Base[i].x) * dr / p2p;
+                //y = yp + (yq-yp) * PC / PQ
+                point.y += Base[i].y + (Base[j].y - Base[i].y) * dr / p2p;
+            }
+        }
+    }
+    point.x /= 3;
+    point.y /= 3;
+    return point;
+}
+
 int main()
 {
     printf("Link Successed\n"); 
@@ -103,11 +146,13 @@ int main()
     /*进行读取操作*/
     char buff[50];
     float an0[MemoryData], an1[MemoryData], an2[MemoryData];
-    memset(an0, 0, MemoryData);
-    memset(an1, 0, MemoryData);
-    memset(an2, 0, MemoryData);
-    float dis0=0, dis1=0, dis2=0;
-    int p=0,t;
+    memset(an0, 0, sizeof(an0));
+    memset(an1, 0, sizeof(an1));
+    memset(an2, 0, sizeof(an2));
+    float dis[3] = { 0,0,0 };
+    int p=0;
+    float ave; 
+    coordinate point = { 0,0 };
 
     while (1)
     {
@@ -123,10 +168,18 @@ int main()
                 p = 0;
             }
         }
-        dis0 = average(an0);
-        dis1 = average(an1);
-        dis2 = average(an2);
-        printf("0:%3.3f 1:%3.3f 2:%3.3f\n", dis0, dis1, dis2);
+        ave = average(an0);
+        if (ave > 0)
+            dis[0] = ave;
+        ave = average(an1);
+        if (ave > 0)
+            dis[1] = ave;
+        ave = average(an2);
+        if (ave > 0)
+            dis[2] = ave;
+        //printf("0:%3.3f 1:%3.3f 2:%3.3f\n", dis0, dis1, dis2);
+        point = ThreeCheck(dis);
+        printf("X:%3.2f Y:%3.2f\n", point.x, point.y);
     }
     close(fd);
     return 0;
