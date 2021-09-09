@@ -3,22 +3,28 @@
 
 #include <iostream>
 #include "TinyROS/TinyROS.h"
+#include <vector>
 
+class N
+{
+public:
+    N() {
+
+    }
+    ~N()
+    {
+        std::cout << "N deleted\n";
+    }
+};
 
 int main()
 {
+    std::vector<N*> v;
+    v.push_back(new N());
+    N* pn = new N();
+    v.push_back(pn);
+    v.clear();
 
-    TinyROS::Master::LoadConfig("MasterConfig.json");
-    try
-    {
-        TinyROS::Master::Run();
-    }
-    catch (TinyROS::TinyROSException& e)
-    {
-        std::cout << e.what() << std::endl;
-    }
-    TinyROS::Master::Spin();
-    TinyROS::Master::SaveConfig("MasterLastRun.json");
     return 0;
 }
 

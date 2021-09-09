@@ -71,26 +71,46 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings" />
-  <ImportGroup Label="Shared" />
+  <ImportGroup Label="Shared">
+    <Import Project="..\Share\Share.vcxitems" Label="Shared" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClCompile Include="CarController.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Update="E:\OneDrive\综合设计与实践C\ZhsjCGroupRepo\Project\Share\OpenSSL\lib\Linux_x64\libcrypto_x64.a">
       <FileType>Document</FileType>
     </Library>
+    <Library Include="..\Share\OpenSSL\lib\Linux_ARM\libcrypto_arm.a" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CarController.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RunCarExample.sh" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>TINYROS_ON_LINUX</PreprocessorDefinitions>
+      <CppLanguageStandard>c++14</CppLanguageStandard>
+      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <Link>
+      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
       <PreprocessorDefinitions>TINYROS_ON_LINUX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CppLanguageStandard>c++14</CppLanguageStandard>
+      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <Link>
+      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <ClCompile>
