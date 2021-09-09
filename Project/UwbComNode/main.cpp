@@ -7,11 +7,14 @@
 #include <termios.h>    /*PPSIX 终端控制定义*/
 #include <errno.h>      /*错误号定义*/
 #include <string.h>
+#include <iostream> 
+#include <fstream> 
 
 int OpenDev(char* Dev)
 {
     //Dev 就是设备，设备就是文件，就是给出该设备文件的路径
     int fd = open(Dev, O_RDWR); //| O_NOCTTY | O_NDELAY
+    //printf("%d", fd);
     if (-1 == fd)
     {
         perror("Can't Open Serial Port");
@@ -146,11 +149,19 @@ int set_Parity(int fd, int databits, int stopbits, int parity)
 
 int main()
 {
+    printf("Link Successed\n"); 
+    /*std::string str;
+    std::fstream f;
+    f.open("/dev/ttyS1");
+    while (f >> str)
+    {
+        std::cout << str;
+    }*/
     int fd;
     int nread;
-    char buff[100];
+    char buff[50];
     /*以读写方式打开串口*/
-    char *ComAddress = "/dev/ttyS2";
+    char *ComAddress = "/dev/ttyS1";
     fd = OpenDev(ComAddress);
     /*设置串口属性*/
     set_speed(fd, 115200);
@@ -162,9 +173,9 @@ int main()
     /*进行读取操作*/
     while (1)
     {
-        while ((nread = read(fd, buff, 512)) > 0)
+        while ((nread = read(fd, buff, 50)) > 0)
         {
-            printf("\nLen %d\n", nread);
+            //printf("\nLen %d\n", nread);
             buff[nread + 1] = '\0';
             printf("\n%s", buff);
         }
