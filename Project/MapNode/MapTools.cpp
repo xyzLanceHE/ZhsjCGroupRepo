@@ -2,7 +2,9 @@
 #include <algorithm>
 #include <random>
 #include <time.h>
-#include <iostream>
+#include "iostream"
+#include "lodepng.h"
+#include <stdlib.h>
 
 namespace RoboTax
 {
@@ -11,6 +13,21 @@ namespace RoboTax
 		return MapMessage(width, height);
 	}
 
+	//打印地图
+	void PrintMap(MapMessage& map)
+	{
+		for (int i = 0; i < map.GetHeight(); i++)
+		{
+			for (int j = 0; j < map.GetWidth(); j++)
+			{
+				std::cout << (int)map.At(i, j) << " ";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	//计算障碍物比率
 	float CalculateObstructRate(MapMessage map)
 	{
 		int count = 0;
@@ -27,6 +44,7 @@ namespace RoboTax
 		return count*1.0f / (map.GetHeight() * map.GetWidth());
 	}
 
+	//随机插入随机大小的障碍物
 	void InsertObstruct(MapMessage& map, int ObstructLen)
 	{
 		int obstructStartI, obstructStartJ, obstructEndI, obstructEndJ;
@@ -63,6 +81,8 @@ namespace RoboTax
 		}
 		//return map;
 	}
+
+	//根据设定障碍物比率随机生成地图
 	MapMessage GenerateRandomMap( int width, int height, float maxObstruct)
 	{
 		int len = width * height;
@@ -70,11 +90,11 @@ namespace RoboTax
 
 		if (height >= width)
 		{
-			maxObstructLen = int(width / 2);
+			maxObstructLen = int(width / 3);
 		}
 		else
 		{
-			maxObstructLen = int(width / 2);
+			maxObstructLen = int(width / 3);
 		}
 
 		MapMessage map(width, height);
@@ -88,26 +108,60 @@ namespace RoboTax
 		}
 		return map;
 	}
-	void EncodeToPng(MapMessage& map, std::fstream& pngFileStream)
-	{
-		;
-	}
-	MapMessage DecodeFromPng(std::fstream& pngFileStream)
-	{
 
-	}
-}
-int main()
-{
-	RoboTax::MapMessage map = RoboTax:: GenerateRandomMap( 10, 10, 0.1);
-
-	for (int i = 0; i < map.GetHeight(); i++)
+	//将地图编码为png格式
+	void EncodeToPng(MapMessage& map, const char* filename)
 	{
-		for (int j = 0; j < map.GetWidth(); j++)
+		int width = map.GetWidth(), height = map.GetHeight();
+		unsigned char* image = new unsigned char[(unsigned long long)(width) * height * 4];
+		int x, y;
+		for (y = 0; y < height; y++)
+			for (x = 0; x < width; x++) {
+				image[4 * width * y + 4 * x + 0] = 255 * map.At(y, x);
+				image[4 * width * y + 4 * x + 1] = 255 * map.At(y, x);
+				image[4 * width * y + 4 * x + 2] = 255 * map.At(y, x);
+				image[4 * width * y + 4 * x + 3] = 255;
+			}
+		unsigned error = lodepng_encode32_file(filename, image, width, height);
+		if (error) printf("error %u: %s\n", error, lodepng_error_text(error));
+		//RoboTax::encodePng(filename, image, width, height);
+		delete[]image;
+	}
+
+	//从png格式文件中载入地图
+	void DecodeFromPng(const char* filename, MapMessage& map)
+	{
+		unsigned width, height;
+		std::vector<unsigned char> image;
+		unsigned error = lodepng::decode(image, width, height, filename);
+		if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+		for (int i = 0; i < height; i++)
 		{
-			std::cout << (int)map.At(i, j)<<" ";
+			for (int j = 0; j < 4 * width; j += 4)
+			{
+				/*std::cout << int(image[(int long long)i * 4 * width + j] / 255) << " ";*/
+				map.RefAt(i, int(j / 4)) = int(image[(int long long)i * 4 * width + j] / 255);
+			}
 		}
-		std::cout << std::endl;
 	}
 
 }
+//测试
+//int main()
+//{
+//	//随机生成地图
+//	RoboTax::MapMessage map = RoboTax:: GenerateRandomMap( 50, 50, 0.2);
+//	PrintMap(map);
+//
+//	const char* filename = "map.png";
+//	//将地图编码为png格式
+//	EncodeToPng(map, filename);
+//
+//	RoboTax::MapMessage map1(map.GetHeight(),map.GetWidth());
+//	//从png图片中载入地图
+//	DecodeFromPng("map.png", map1);
+//	std::cout << "map decoded from png:" << std::endl;
+//	PrintMap(map1);
+//
+//	return 0;
+//}

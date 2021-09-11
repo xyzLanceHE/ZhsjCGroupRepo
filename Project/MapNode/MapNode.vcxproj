@@ -143,10 +143,12 @@
     <Library Include="..\Share\OpenSSL\lib\Windows_x64\libcrypto_static_x64.lib" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="lodepng.cpp" />
     <ClCompile Include="MapNode.cpp" />
     <ClCompile Include="MapTools.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="lodepng.h" />
     <ClInclude Include="MapTools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

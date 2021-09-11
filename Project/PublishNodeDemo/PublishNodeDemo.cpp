@@ -1,5 +1,6 @@
 #include <iostream>
 #include "TinyROS/TinyROS.h"
+#include "TinyROS/SharedMessageTypes.h"
 #include <thread>
 
 template<int length>
@@ -10,9 +11,17 @@ struct test
 	int a[length];
 };
 
-void NormalCallback(TinyROS::SimpleObjectMessage<test<5>> msg)
+void NormalCallback(RoboTax::MapMessage map)
 {
-	std::cout << "normal callback: I am normal function, I received: " << msg.Value.i << msg.Value.j<< msg.Value.a[0]<< msg.Value.a[1]<< std::endl;
+	for (int i = 0; i < map.GetHeight(); i++)
+	{
+		for (int j = 0; j < map.GetWidth(); j++)
+		{
+			std::cout << (int)map.At(i, j) << " ";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
 }
 
 class SampleClass
@@ -52,7 +61,7 @@ int main()
 	//节点初始化
 	try
 	{
-		TinyROS::Node::Init("Foolish Wu");
+		TinyROS::Node::Init("TestNode");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -64,7 +73,7 @@ int main()
 	TinyROS::Subscriber* pForSub;
 	try
 	{
-		pForPub = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<test<5>>>("Foolish Wu");
+		pForPub = TinyROS::NewPublisher<TinyROS::StringMessage>("MapOrder");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -72,7 +81,7 @@ int main()
 		return -1;
 	}
 
-	TinyROS::MessageCallback<TinyROS::SimpleObjectMessage<test<5>>> callback(5);
+	TinyROS::MessageCallback<RoboTax::MapMessage> callback(5);
 
 	callback.Register(NormalCallback);
 
@@ -85,7 +94,7 @@ int main()
 	//callback.Register(sampleFunctionalObj);
 	try
 	{
-		pForSub = TinyROS::NewSubscriber<TinyROS::SimpleObjectMessage<test<5>>>("Foolish Wu", callback);
+		pForSub = TinyROS::NewSubscriber<RoboTax::MapMessage>("localMap", callback);
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -93,24 +102,14 @@ int main()
 		return -1;
 	}
 
-	test<5> wu;
-	wu.i = 0;
-	wu.j = 1;
-	wu.a[0] = 2;
-	wu.a[1] = 3;
-	TinyROS::SimpleObjectMessage<test<5>> msg(wu);
+	TinyROS::StringMessage msg("start");
 
 	while (true)
 	{
-		wu.i += 1;
-		wu.j += 1;
-		wu.a[0] += 1;
-		wu.a[1] += 1;
-		msg.Value = wu;
 		pForPub->Publish(msg);
 
 		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(1s);
+		std::this_thread::sleep_for(1min);
 	}
 	TinyROS::Node::Close();
 
