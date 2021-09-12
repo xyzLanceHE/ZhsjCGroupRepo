@@ -12,6 +12,7 @@ struct test
 };
 struct move
 {
+	int rank;
 	float linear;
 	float radius;
 };
@@ -81,7 +82,7 @@ int main()
 	TinyROS::Subscriber* pForSub;
 	try
 	{
-		pForPub = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<move>>("RouteSpeedOrder");
+		pForPub = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<move>>("MoveOrder");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -112,13 +113,14 @@ int main()
 
 	/*TinyROS::StringMessage msg("start");*/
 	move moveOrder;
+	moveOrder.rank = 2;
 	moveOrder.linear = 1;
 	moveOrder.radius = 2;
 	TinyROS::SimpleObjectMessage<move> msg(moveOrder);
 	while (true)
 	{
 		pForPub->Publish(msg);
-
+		std::cout << "send a rank2 order"<<std::endl;
 		using namespace std::chrono_literals;
 		std::this_thread::sleep_for(3s);
 	}

@@ -3,8 +3,15 @@
 #include "TinyROS/SharedMessageTypes.h"
 #include <thread>
 
+
 int main()
 {
+	struct move
+	{
+		int rank;
+		float linear;
+		float radius;
+	};
 	//节点初始化
 	try
 	{
@@ -20,21 +27,25 @@ int main()
 	TinyROS::Publisher* ConstSpeedPub;
 	try
 	{
-		ConstSpeedPub = TinyROS::NewPublisher<TinyROS::StringMessage>("ConstSpeedOrder");
+		ConstSpeedPub = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<move>>("MoveOrder");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
 		std::cout << e.what();
 		return -1;
 	}
-	TinyROS::StringMessage msg("ConstSpeed");
+	move moveOrder;
+	moveOrder.rank = 3;
+	moveOrder.linear = 0;
+	moveOrder.radius = INFINITY;
+	TinyROS::SimpleObjectMessage<move> msg(moveOrder);
 
 	while (true)
 	{
 		ConstSpeedPub->Publish(msg);
-
+		std::cout << "send a const msg" << std::endl;
 		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(10s);
+		std::this_thread::sleep_for(0.5s);
 	}
 	TinyROS::Node::Close();
 }
