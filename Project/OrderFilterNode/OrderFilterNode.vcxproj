@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="MessageFilter.cpp" />
     <ClCompile Include="OrderFilterNode.cpp" />
   </ItemGroup>
   <ItemGroup>

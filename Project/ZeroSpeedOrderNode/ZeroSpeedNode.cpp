@@ -6,12 +6,7 @@
 
 int main()
 {
-	struct move
-	{
-		int rank;
-		float linear;
-		float radius;
-	};
+
 	//节点初始化
 	try
 	{
@@ -27,18 +22,17 @@ int main()
 	TinyROS::Publisher* ConstSpeedPub;
 	try
 	{
-		ConstSpeedPub = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<move>>("MoveOrder");
+		ConstSpeedPub = TinyROS::NewPublisher<RoboTax::CarVelocityMessage>("MoveOrder");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
 		std::cout << e.what();
 		return -1;
 	}
-	move moveOrder;
-	moveOrder.rank = 3;
-	moveOrder.linear = 0;
-	moveOrder.radius = INFINITY;
-	TinyROS::SimpleObjectMessage<move> msg(moveOrder);
+	RoboTax::CarVelocity moveOrder;
+	moveOrder.Linear = 0;
+	moveOrder.Radius = INFINITY;
+	RoboTax::CarVelocityMessage msg(moveOrder);
 
 	while (true)
 	{

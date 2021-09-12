@@ -18,6 +18,9 @@
     <ClCompile Include="OrderFilterNode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="MessageFilter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\Share\OpenSSL\lib\Linux_x64\libcrypto_x64.a" />
