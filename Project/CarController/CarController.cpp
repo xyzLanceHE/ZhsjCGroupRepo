@@ -96,9 +96,3 @@ namespace RoboTax
 	}
 
 }
-int main()
-{
-	RoboTax::SetSpeed(0, inf);
-	system('pause');
-	return 0;
-}

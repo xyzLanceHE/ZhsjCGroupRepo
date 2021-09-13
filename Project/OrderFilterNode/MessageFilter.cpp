@@ -4,6 +4,7 @@
 #include <ctime>
 #include <map> 
 #include <vector>
+#include <iostream>
 
 namespace RoboTax
 {
@@ -70,6 +71,7 @@ namespace RoboTax
 		if (highestValid != -1)
 		{
 			this->pFilterMessagePublisher->Publish(this->PriorityMessagePairs[highestValid].second);
+			std::cout << "send a move order" << this->PriorityMessagePairs[highestValid].second.Value.Linear<<" " << this->PriorityMessagePairs[highestValid].second.Value.Radius << std::endl;
 		}
 	}
 

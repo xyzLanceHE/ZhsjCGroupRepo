@@ -10,12 +10,6 @@ struct test
 	int j;
 	int a[length];
 };
-struct move
-{
-	int rank;
-	float linear;
-	float radius;
-};
 void NormalCallback(RoboTax::MapMessage map)
 {
 	for (int i = 0; i < map.GetHeight(); i++)
@@ -28,9 +22,9 @@ void NormalCallback(RoboTax::MapMessage map)
 	}
 	std::cout << std::endl;
 }
-void NormalCallback2(TinyROS::SimpleObjectMessage<move> msg)
+void NormalCallback2(RoboTax::CarVelocityMessage msg)
 {
-	std::cout <<"linear:"<< msg.Value.linear <<"radius:" <<msg.Value.radius<< std::endl;
+	std::cout <<"linear:"<< msg.Value.Linear <<"radius:" <<msg.Value.Radius<< std::endl;
 }
 
 class SampleClass
@@ -82,7 +76,7 @@ int main()
 	TinyROS::Subscriber* pForSub;
 	try
 	{
-		pForPub = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<move>>("MoveOrder");
+		pForPub = TinyROS::NewPublisher<RoboTax::CarVelocityMessage>("MoveOrder");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -90,7 +84,7 @@ int main()
 		return -1;
 	}
 
-	TinyROS::MessageCallback<TinyROS::SimpleObjectMessage<move>> callback(1);
+	TinyROS::MessageCallback<RoboTax::CarVelocityMessage> callback(1);
 
 	callback.Register(NormalCallback2);
 
@@ -103,7 +97,7 @@ int main()
 	//callback.Register(sampleFunctionalObj);
 	try
 	{
-		pForSub = TinyROS::NewSubscriber<TinyROS::SimpleObjectMessage<move>>("FiltedOrder", callback);
+		pForSub = TinyROS::NewSubscriber<RoboTax::CarVelocityMessage>("FiltedOrder", callback);
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -112,11 +106,10 @@ int main()
 	}
 
 	/*TinyROS::StringMessage msg("start");*/
-	move moveOrder;
-	moveOrder.rank = 2;
-	moveOrder.linear = 1;
-	moveOrder.radius = 2;
-	TinyROS::SimpleObjectMessage<move> msg(moveOrder);
+	RoboTax::CarVelocity moveOrder;
+	moveOrder.Linear = 0.2;
+	moveOrder.Radius = 0.0;
+	RoboTax::CarVelocityMessage msg(moveOrder);
 	while (true)
 	{
 		pForPub->Publish(msg);

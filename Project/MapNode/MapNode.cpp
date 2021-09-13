@@ -13,8 +13,8 @@ void ChangeMapFlag(TinyROS::StringMessage msg)
 
 int main()
 {
-	RoboTax::MapMessage map = RoboTax::GenerateRandomMap(10, 10, 0.1);
-	//TinyROS::SimpleObjectMessage<map> msg(rawMap);
+	RoboTax::MapMessage map;
+	DecodeFromPng("map.png", map);
 	//节点初始化
 	try
 	{

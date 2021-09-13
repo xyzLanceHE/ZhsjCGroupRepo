@@ -52,7 +52,14 @@ int main(int argc, char* argv[])
 	RoboTax::CarControllerInterface testController(PortPath.c_str());
 
 	std::cout << "Initializing this as Node " << NodeName << std::endl;
-	TinyROS::Node::Init(NodeName.c_str());
+	try
+	{
+		TinyROS::Node::Init(NodeName.c_str());
+	}
+	catch(TinyROS::TinyROSException&e)
+	{
+		std::cout << e.what() << std::endl;
+	}
 
 	RoboTax::CarControllerInterface controller(PortPath.c_str());
 	VelocityForwarder vForwarder(&controller);

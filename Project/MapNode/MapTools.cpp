@@ -117,9 +117,9 @@ namespace RoboTax
 		int x, y;
 		for (y = 0; y < height; y++)
 			for (x = 0; x < width; x++) {
-				image[4 * width * y + 4 * x + 0] = 255 * map.At(y, x);
-				image[4 * width * y + 4 * x + 1] = 255 * map.At(y, x);
-				image[4 * width * y + 4 * x + 2] = 255 * map.At(y, x);
+				image[4 * width * y + 4 * x + 0] = 255 - 255 * map.At(y, x);
+				image[4 * width * y + 4 * x + 1] = 255 - 255 * map.At(y, x);
+				image[4 * width * y + 4 * x + 2] = 255 - 255 * map.At(y, x);
 				image[4 * width * y + 4 * x + 3] = 255;
 			}
 		unsigned error = lodepng_encode32_file(filename, image, width, height);
@@ -140,17 +140,16 @@ namespace RoboTax
 			for (int j = 0; j < 4 * width; j += 4)
 			{
 				/*std::cout << int(image[(int long long)i * 4 * width + j] / 255) << " ";*/
-				map.RefAt(i, int(j / 4)) = int(image[(int long long)i * 4 * width + j] / 255);
+				map.RefAt(i, int(j / 4)) = int(1-image[(int long long)i * 4 * width + j] / 255);
 			}
 		}
 	}
-
 }
 //测试
 //int main()
 //{
 //	//随机生成地图
-//	RoboTax::MapMessage map = RoboTax:: GenerateRandomMap( 50, 50, 0.2);
+//	RoboTax::MapMessage map = RoboTax:: GenerateRandomMap( 100, 100, 0.2);
 //	PrintMap(map);
 //
 //	const char* filename = "map.png";

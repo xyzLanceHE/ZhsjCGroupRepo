@@ -19,7 +19,7 @@ int main()
 
 	try
 	{
-		filtedOrderPub = TinyROS::NewPublisher<RoboTax::CarVelocityMessage>("FiltedOrder");
+		filtedOrderPub = TinyROS::NewPublisher<RoboTax::CarVelocityMessage>("cmd/vel/Noelle");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
