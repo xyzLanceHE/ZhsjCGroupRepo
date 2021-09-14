@@ -4,6 +4,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <string>
+#include <iostream>
 //#include <sys/time.h>
 //#include <sys/types.h>
 #include <errno.h>
@@ -93,6 +94,8 @@ namespace RoboTax
 		char cmd[8];
 		sprintf(cmd, "%03d%1d%04d", l, ctr, r);
 		write(this->impl->SerialPortFD, cmd, 8);
+		std::string s(cmd, 8);
+		std::cout << s << std::endl;
 	}
 
 }

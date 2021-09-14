@@ -17,6 +17,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_reader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_value.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)JsonCpp\json_writer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)MapTools\lodepng.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)MapTools\MapTools.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Exceptions.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\LibWrapper.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Master.cpp" />
@@ -38,6 +40,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\version.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\include\writer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)JsonCpp\json_tool.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MapTools\lodepng.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MapTools\MapTools.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\e_os2.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\opensslconf.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)OpenSSL\include\opensslv.h" />

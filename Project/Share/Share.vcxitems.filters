@@ -19,6 +19,9 @@
     <Filter Include="JsonCpp\src">
       <UniqueIdentifier>{bf6090a2-a2e1-4ce5-898a-0f372aa76764}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MapTools">
+      <UniqueIdentifier>{c1f793a7-d9df-4f6e-9caa-cd3c22786c6e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\Node.h">
@@ -102,6 +105,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)TinyROS\SharedMessageTypes.h">
       <Filter>TinyROS</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)MapTools\lodepng.h">
+      <Filter>MapTools</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)MapTools\MapTools.h">
+      <Filter>MapTools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\Node.cpp">
@@ -136,6 +145,12 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)TinyROS\SharedMessageTypes.cpp">
       <Filter>TinyROS</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)MapTools\lodepng.cpp">
+      <Filter>MapTools</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)MapTools\MapTools.cpp">
+      <Filter>MapTools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
