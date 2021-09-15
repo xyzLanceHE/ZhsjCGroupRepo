@@ -13,7 +13,7 @@ int main()
 	//节点初始化
 	try
 	{
-		TinyROS::Node::Init("TestNode");
+		TinyROS::Node::Init("Manual1");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -48,12 +48,12 @@ int main()
 			msg.Value.Linear = 0.1;
 			msg.Value.Radius = 1000;
 			break;
-		case 'a':
+		case 'd':
 			msg.Value.Linear = 0.1;
 			msg.Value.Radius = 0.0001;
 			break;
 
-		case 'd':
+		case 'a':
 			msg.Value.Linear = 0.1;
 			msg.Value.Radius = -0.0001;
 			break;

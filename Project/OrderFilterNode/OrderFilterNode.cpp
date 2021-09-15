@@ -6,7 +6,7 @@ int main()
 	//初始化节点
 	try
 	{
-		TinyROS::Node::Init("OrderFilterNode");
+		TinyROS::Node::Init("OrderFilterNode1");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
