@@ -22,7 +22,7 @@ int main()
 	TinyROS::Publisher* ConstSpeedPub;
 	try
 	{
-		ConstSpeedPub = TinyROS::NewPublisher<RoboTax::CarVelocityMessage>("MoveOrder");
+		ConstSpeedPub = TinyROS::NewPublisher<RoboTax::CarVelocityMessage>("ZeroSpeedOrder");
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -37,7 +37,7 @@ int main()
 	while (true)
 	{
 		ConstSpeedPub->Publish(msg);
-		std::cout << "send a const msg" << std::endl;
+		std::cout << "send a zero speed msg" << std::endl;
 		using namespace std::chrono_literals;
 		std::this_thread::sleep_for(0.5s);
 	}

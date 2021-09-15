@@ -2,9 +2,7 @@
 #include <math.h>
 #include <TinyROS/TinyROS.h>
 #include <iostream>
-//#error 尽量使用constexpr而不是宏定义
-//constexpr int xMax = 20;
-//constexpr int yMax = 20;
+#include "TinyROS/SharedMessageTypes.h"
 
 namespace RoboTax
 {
@@ -32,12 +30,9 @@ namespace RoboTax
 		}
 	}
 
-//#error 直接写成构造函数啊。C++的struct也是类，只是默认访问权限不同
 	Node *NewNode(int x, int y, int b)
 	{
 		Node* pNode = nullptr;
-//#error 写成构造函数之后，就不用分配内存了，在外面直接声明变量，或者使用new运算符分配变量并得到指针
-//#error 使用C++的类型转换符而不是C风格的，如果写成构造函数甚至不需要转化
 		pNode = new Node;
 		if (pNode == nullptr) return nullptr;
 		pNode->X = x;
@@ -50,8 +45,7 @@ namespace RoboTax
 		return pNode;
 	}
 
-//#error 建议封装一个List类，该方法作为析构函数
-//#error 封装List类有助于简化函数参数
+
 	void FreeList(Node* pList)
 	{
 		Node* pNode = nullptr;
@@ -59,12 +53,12 @@ namespace RoboTax
 		{
 			pNode = pList;
 			pList = pList->PNext;
-//#error 直接使用delete运算符即可，并且可以在析构函数中进行需要的处理
+
 			delete pNode;
 		}
 	}
 
-//#error 建议封装成类，此函数作为类的方法时，可以省去参数pList和返回值
+
 	Node* DelNode(Node* pNode, Node* pList)
 	{
 		if (pList == nullptr) return pList;
@@ -72,8 +66,8 @@ namespace RoboTax
 		pList->PNext = DelNode(pNode, pList->PNext);
 		return pList;
 	}
-//#error 建议封装成类，此函数作为类的方法时，可以省去参数pList和返回值
-//#error 为什么不管pFather呢？ 链表里面只要前后排好就行，只用来检测是否在表里就好
+
+
 	Node* AddToList(Node* pNode, Node* pList)
 	{
 		pNode->PNext = pList;
@@ -96,11 +90,6 @@ namespace RoboTax
 		return pOpen;
 	}
 
-//#error 建议封装成类，此函数作为类的方法时，可以省去参数pList；
-//#error 尾递归，建议改成循环
-//#error 从功能上看，建议改名为Find
-//#error 多说两句：话说张伟老师强调自己写底层，不过我还是觉得STL既然已经是C++标准，还是可以用的，比起这点数据结构，不如多了解点计算机原理来得实在
-//#error 自己写链表的时候，也可以参考STL容器的一些常见风格，尤其是做好内存管理并提供迭代器，例如本函数，找到节点则返回该节点的迭代器，否则返回的迭代器==list.end()
 	Node* IsNodeInList(Node* pNode, Node* pList)
 	{
 		//if (pList == nullptr) return nullptr;
@@ -118,15 +107,7 @@ namespace RoboTax
 		return nullptr;
 	}
 
-//#error 建议封装成类，可以避免递归的写法
-	//void PrintPath(Node* pGoal)
-	//{
-	//	if (pGoal == nullptr) return;
-	//	PrintPath(pGoal->PFather);
-	//	printf("(%d %d)\n", pGoal->X, pGoal->Y);
-	//}
 
-//#error 好像没见你赋值过pFather啊，怎么就用上了（如果赋值了当我没说）每拓展一个节点都会把新节点的父指针指向他
 	int IsGrandFather(Node* pNode, Node* pFather)
 	{
 		if (pFather == nullptr) return 0;
@@ -134,8 +115,6 @@ namespace RoboTax
 		return Compare(pNode, pFather->PFather);
 	}
 
-//#error 建议改名，因为此函数具有泛用性
-//#error 建议改成inline
 	inline bool IsReach(Node* pNode, int goalX, int goalY)
 	{
 		if (pNode->X == goalX && pNode->Y == goalY)
@@ -166,14 +145,10 @@ namespace RoboTax
 		return(sqrt(pow((goalY - pNode->Y), 2) + pow((goalX - pNode->X), 2)));
 	}
 
-//#error 建议将数组参数改为指针，数组长度作为变量传入，以提高扩展性
+
 	int* AStar(Node* start, int goalX, int goalY, int* map, int xMax, int yMax)
 	{
-//#error 如果封装List类，这里就使用List类型
-//#error 关于List类的一些建议：List类内维护一些实用指针，例如链表两头的指针，以提高效率
-//#error 使用List进行更加清晰的内存管理：内部的Node由List独占，从而在List的销毁时统一析构
-//#error 其他地方使用Node的时候，直接声明值就好了，不需要声明指针
-//#error 只有当Node加入或者从链表里返回时，以传值的形式进行插入和返回，然后在链表内部使用指针
+
 		Node* pOpen = nullptr;//open表
 		Node* pClose = nullptr;//close表
 		Node* n = nullptr, *m = nullptr, *pNode = nullptr;
@@ -249,7 +224,7 @@ namespace RoboTax
 				}
 			}
 		}
-//#error 为什么只会return空指针呢  因为不返回空指针的结果在前面就返回了，返回空指针说明没找到
+
 		return nullptr;
 	}
 	void RunAStar(int startX, int startY, int goalX, int goalY, int *map, int xMax, int yMax)
@@ -272,40 +247,22 @@ namespace RoboTax
 		else std::cout << "搜索失败";
 	}
 }
+
+
+RoboTax::MapMessage map;
+
+
 int main()
 {
-	int xMax = 20;
-	int yMax = 20;
-	int map[400] = { 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,
-					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,
-					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,
-					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,
-					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,
-					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
-					 0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
-					 0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0 };
-	for (int i = 0; i < xMax; i++)
-	{
-		for (int j = 0; j < yMax; j++)
-		{
-			std::cout << map[i * yMax + j] << "  ";
-		}
-		std::cout << std::endl;
-	}
-	std::cout << std::endl;
-	RoboTax::RunAStar(19, 0, 0, 19, map, xMax, yMax);
-	system("pause");
+	TinyROS::Node::Init("PathPlanner");
+	
+	TinyROS::Publisher* planPub;
+	TinyROS::Subscriber* mapSub;
+	TinyROS::Subscriber* goalSub;
+	TinyROS::Subscriber* posSub;
+
+
+
+
 	return 0;
 }
