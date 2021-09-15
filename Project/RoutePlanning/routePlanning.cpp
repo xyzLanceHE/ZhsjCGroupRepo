@@ -249,19 +249,68 @@ namespace RoboTax
 }
 
 
-RoboTax::MapMessage map;
+RoboTax::MapMessage* map = nullptr;
+unsigned char* mapData = nullptr;
+RoboTax::Coordinate2D goal;
+RoboTax::Coordinate2D pos;
+TinyROS::Publisher* planPub;
+bool isMapSet = false;
+bool isGoalSet = false;
+bool posRefreshFlag = false;
+
+
+void SetMap(RoboTax::MapMessage m)
+{
+	delete map;
+	delete[] mapData;
+	map = new RoboTax::MapMessage(m);
+	mapData = new unsigned char[map->GetWidth() * map->GetHeight()];
+	map->CopyTo(mapData);
+	isMapSet = true;
+}
+
+void SetGoal(RoboTax::Coordinate2DMessage msg)
+{
+	goal = msg.Value;
+	isGoalSet = true;
+}
+
+void SetPos(RoboTax::Coordinate2DMessage msg)
+{
+	pos = msg.Value;
+	posRefreshFlag = true;
+}
 
 
 int main()
 {
 	TinyROS::Node::Init("PathPlanner");
-	
-	TinyROS::Publisher* planPub;
+
 	TinyROS::Subscriber* mapSub;
 	TinyROS::Subscriber* goalSub;
 	TinyROS::Subscriber* posSub;
 
+	planPub = TinyROS::NewPublisher<RoboTax::CarVelocityMessage>("PlannerOrder");
 
+	TinyROS::MessageCallback<RoboTax::MapMessage> mapSubCallback(1);
+	TinyROS::MessageCallback<RoboTax::Coordinate2DMessage> goalSubCallback(1);
+	TinyROS::MessageCallback<RoboTax::Coordinate2DMessage> posSubCallback(1);
+
+	mapSubCallback.Register(SetMap);
+	goalSubCallback.Register(SetGoal);
+	posSubCallback.Register(SetPos);
+
+	mapSub = TinyROS::NewSubscriber("localMap", mapSubCallback);
+	goalSub = TinyROS::NewSubscriber("GoalOrder", goalSubCallback);
+	posSub = TinyROS::NewSubscriber("UWB", posSubCallback);
+
+	while (1)
+	{
+		if (posRefreshFlag)
+		{
+			
+		}
+	}
 
 
 	return 0;
