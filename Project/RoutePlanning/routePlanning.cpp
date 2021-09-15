@@ -146,7 +146,7 @@ namespace RoboTax
 	}
 
 
-	int* AStar(Node* start, int goalX, int goalY, int* map, int xMax, int yMax)
+	unsigned char* AStar(Node* start, int goalX, int goalY, unsigned char* map, int xMax, int yMax)
 	{
 
 		Node* pOpen = nullptr;//open表
@@ -227,7 +227,7 @@ namespace RoboTax
 
 		return nullptr;
 	}
-	void RunAStar(int startX, int startY, int goalX, int goalY, int *map, int xMax, int yMax)
+	void RunAStar(int startX, int startY, int goalX, int goalY, unsigned char* map, int xMax, int yMax)
 	{
 		Node* start;
 		Node* goal;
@@ -308,7 +308,7 @@ int main()
 	{
 		if (posRefreshFlag)
 		{
-			
+			RoboTax::RunAStar(pos.x, pos.y, goal.x, goal.y, mapData, map->GetHeight(), map->GetWidth());
 		}
 	}
 
