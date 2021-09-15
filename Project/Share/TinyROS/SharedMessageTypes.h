@@ -81,5 +81,15 @@ namespace RoboTax
 	//using MapMessage = TinyROS::SimpleObjectMessage<Map>;
 #pragma endregion
 
+#pragma region 坐标消息
+		// editor: 贺兰山
+	struct Coordinate2D //表示一个坐标
+	{
+		float x;
+		float y;
+	};
 
+	// 坐标消息别名
+	using Coordinate2DMessage = TinyROS::SimpleObjectMessage<Coordinate2D>;
+#pragma endregion
 }

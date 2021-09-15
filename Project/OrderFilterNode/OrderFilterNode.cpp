@@ -15,7 +15,8 @@ int main()
 	}
 
 	TinyROS::Publisher* filtedOrderPub = nullptr;
-	TinyROS::Subscriber* moveOrderSub;
+	TinyROS::Subscriber* manualOrderSub;
+	TinyROS::Subscriber* plannerOrderSub;
 
 	try
 	{
@@ -29,13 +30,17 @@ int main()
 	RoboTax::MessageFilter<RoboTax::CarVelocityMessage> filter(filtedOrderPub);
 
 	TinyROS::MessageCallback<RoboTax::CarVelocityMessage> moveOrderSubsciberCallback(1);
+	TinyROS::MessageCallback<RoboTax::CarVelocityMessage> plannerOrderSubsciberCallback(1);
 
 	RoboTax::PriorityVelocityCallback priority5Callback(&filter, 5);
+	RoboTax::PriorityVelocityCallback priority4Callback(&filter, 4);
 
 	moveOrderSubsciberCallback.Register(priority5Callback);
+	plannerOrderSubsciberCallback.Register(priority4Callback);
 	try
 	{
-		moveOrderSub = TinyROS::NewSubscriber<RoboTax::CarVelocityMessage>("MoveOrder", moveOrderSubsciberCallback);
+		manualOrderSub = TinyROS::NewSubscriber<RoboTax::CarVelocityMessage>("MoveOrder", moveOrderSubsciberCallback);
+		plannerOrderSub = TinyROS::NewSubscriber<RoboTax::CarVelocityMessage>("PlannerOrder", plannerOrderSubsciberCallback);
 	}
 	catch (TinyROS::TinyROSException& e)
 	{
@@ -44,7 +49,7 @@ int main()
 	}
     while (true)
     {
-	
+
         //using namespace std::chrono_literals;
         //std::this_thread::sleep_for(1s);
     }

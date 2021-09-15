@@ -13,16 +13,15 @@
 
 
 #include "TinyROS/TinyROS.h"
+#include "TinyROS/SharedMessageTypes.h"
 #include <thread>
 
 #define ComAddress  "/dev/ttyUSB0"
 #define MemoryData 5
-struct coordinate
-{
-    float x;
-    float y;
-};
-coordinate Base[3] = { { 0,0 },{ 1,0 },{ 0,1 } };
+
+using namespace RoboTax;
+
+Coordinate2D Base[3] = { { 0,0 },{ 1,0 },{ 0,1 } };
 /**
 *@brief  设置串口属性
 */
@@ -90,9 +89,9 @@ float average(float an[MemoryData])
     return dis;
 }
 
-coordinate ThreeCheck(float dis[])
+Coordinate2D ThreeCheck(float dis[])
 {
-    coordinate point = { 0,0 };
+    Coordinate2D point = { 0,0 };
     for (int i = 0; i < 3; i++)
         if (dis[i] <= 0)
             return point;
@@ -127,9 +126,6 @@ coordinate ThreeCheck(float dis[])
     return point;
 }
 
-// 回调函数的形式：返回值是void，参数是收到的消息
-void NormalCallback(TinyROS::StringMessage msg);
-
 int main()
 {
     try
@@ -141,14 +137,12 @@ int main()
         std::cout << e.what();
         return -1;
     }
-    //定义节点
+
     TinyROS::Publisher* uwb_ageru;
-    //TinyROS::MessageCallback<TinyROS::StringMessage> callback(3);
-    //callback.Register(NormalCallback);
 
     try
     {
-        uwb_ageru = TinyROS::NewPublisher<TinyROS::SimpleObjectMessage<coordinate>>("UWB");
+        uwb_ageru = TinyROS::NewPublisher<RoboTax::Coordinate2DMessage>("UWB");
     }
     catch (TinyROS::TinyROSException& e)
     {
@@ -184,8 +178,8 @@ int main()
     float dis[3] = { 0,0,0 };
     int p=0;
     float ave; 
-    coordinate point = { 0,0 };
-    TinyROS::SimpleObjectMessage<coordinate> msg(point);
+    Coordinate2D point = { 0,0 };
+    RoboTax::Coordinate2DMessage msg(point);
 
     while (1)
     {
@@ -216,6 +210,8 @@ int main()
 
         //发布消息
         uwb_ageru->Publish(msg);
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(0.5s);
     }
 
     // 程序退出之前，关闭Node，释放fd
